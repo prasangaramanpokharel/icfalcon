@@ -16,11 +16,7 @@ cd "$FALCON_BACKEND_DIR"
 if replica_is_running; then
   prog_ok "Local replica already running"
 else
-  prog_run "Starting local replica" dfx start --background
-  wait_for_replica || {
-    prog_fail "Replica did not become ready"
-    exit 1
-  }
+  prog_run "Starting local replica" start_local_replica
   prog_ok "Local replica started"
 fi
 

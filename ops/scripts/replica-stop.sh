@@ -12,10 +12,5 @@ export FALCON_BACKEND_DIR="${FALCON_BACKEND_DIR:-$ROOT/backend}"
 
 cd "$FALCON_BACKEND_DIR"
 
-if ! replica_is_running; then
-  prog_ok "Local replica already stopped"
-  exit 0
-fi
-
-prog_run "Stopping local replica" dfx stop
+prog_run "Stopping local replica" stop_local_replica
 prog_ok "Local replica stopped"

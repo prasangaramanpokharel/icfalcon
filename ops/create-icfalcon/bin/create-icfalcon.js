@@ -161,6 +161,7 @@ const env = {
   ...process.env,
   PATH: `${localBinPath()}${path.delimiter}${process.env.PATH || ""}`,
   FALCON_PROGRESS: "1",
+  FALCON_NO_DEV: "1",
 }
 
 process.stdout.write("\n")
@@ -170,3 +171,13 @@ try {
 } catch {
   fail(`setup failed — cd ${projectName} and run: falcon s:init`)
 }
+
+process.stdout.write(`\n  🎉 Success! Created ${projectName} at ${target}\n\n`)
+process.stdout.write(`  Inside that directory, you can run:\n\n`)
+process.stdout.write(`    ${cyan}falcon f:dev${reset}     Start the Next.js development server\n`)
+process.stdout.write(`    ${cyan}falcon b:test${reset}    Run Motoko backend unit tests\n`)
+process.stdout.write(`    ${cyan}falcon a:c:m${reset}     Audit Motoko code style and layering\n`)
+process.stdout.write(`    ${cyan}falcon m:f <Name>${reset} Scaffold a new feature module\n\n`)
+process.stdout.write(`  To get started:\n\n`)
+process.stdout.write(`    cd ${projectName}\n`)
+process.stdout.write(`    falcon f:dev\n\n`)

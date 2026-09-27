@@ -42,3 +42,8 @@ Thumbs.db
 # motoko / dfx cache
 **/.mops/moc-*
 backend/Runner.wasm
+
+# test scaffold directories
+test/
+test-*/
+my-app/

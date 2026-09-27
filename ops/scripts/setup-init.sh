@@ -26,5 +26,7 @@ prog_run "Verifying backend health" verify_local_ping
 
 prog_success
 
-cd "$ROOT/frontend"
-exec npm run dev
+if [[ "${FALCON_NO_DEV:-0}" != "1" ]]; then
+  cd "$ROOT/frontend"
+  exec npm run dev
+fi

@@ -32,6 +32,7 @@ commands:
   backend:deploy:
     confirm: true
     steps:
+      - dfx canister create {{canister}} {{network}}
       - dfx build {{canister}} {{network}}
       - dfx deploy {{canister}} --mode=upgrade --wasm-memory-persistence keep {{network}}
 
@@ -49,6 +50,7 @@ commands:
   prod:ship:
     confirm: true
     steps:
+      - dfx canister create {{canister}} {{network}}
       - dfx build {{canister}} {{network}}
       - dfx deploy {{canister}} --mode=upgrade --wasm-memory-persistence keep {{network}}
       - npm run build --prefix frontend

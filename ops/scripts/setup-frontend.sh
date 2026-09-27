@@ -33,5 +33,7 @@ if [[ ! -f components.json ]]; then
   prog_run "Initializing shadcn/ui" npx shadcn@latest init --preset bbVJxYW -y
 fi
 
-prog_run "Installing shadcn components" npx shadcn@latest add --all -y
+if [[ ! -d components/ui || -z "$(ls -A components/ui 2>/dev/null)" ]]; then
+  prog_run "Installing shadcn components" npx shadcn@latest add --all -y
+fi
 prog_run "Building frontend" npm run build

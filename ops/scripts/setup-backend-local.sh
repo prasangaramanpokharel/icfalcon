@@ -10,12 +10,9 @@ source "$ROOT/ops/scripts/lib/replica.sh"
 
 deploy_local_canister() {
   cd "$BACKEND"
-  if dfx canister id app --network local &>/dev/null; then
-    dfx build app --network local
-    dfx deploy app --mode=upgrade --wasm-memory-persistence keep --network local
-  else
-    dfx deploy app --network local
-  fi
+  dfx canister create app --network local 2>/dev/null || true
+  dfx build app --network local
+  dfx deploy app --mode=upgrade --wasm-memory-persistence keep --network local 2>/dev/null || dfx deploy app --network local
 }
 
 write_frontend_env() {
