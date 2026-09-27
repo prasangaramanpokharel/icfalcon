@@ -2,6 +2,21 @@
 
 All notable changes to IcFalcon are documented here.
 
+## [0.2.2] - 2026-09-27
+
+### Fixed
+
+- **Self-healing Local Replica**: Auto-cleanup for orphaned `pocket-ic`, lingering `dfx start`, `icx-proxy`, and stale `.dfx/network/local/pid` process locks (`kill_lingering_replica_processes`)
+- **Clean Replica Deployment**: Cleared hardcoded local canister IDs from `canister_ids.json` and added automatic fallback from upgrade to install mode on clean replica subnet initialization
+- **Non-blocking Scaffolding**: `npm create icfalcon@latest` returns cleanly to shell prompt with quickstart commands instead of blocking inside `npm run dev` (`FALCON_NO_DEV=1`)
+- **Fast Frontend Setup**: Skips redundant shadcn network re-download in `setup-frontend.sh` when components already exist in `frontend/components/ui/`
+- **Canister Call Working Directory**: `canister-call.sh` (`falcon c:call` and `falcon c:ping`) automatically targets `backend/` to resolve `dfx.json` from root
+- **Git Ignore**: Added `test/`, `test-*/`, and `my-app/` scaffold test folders to `.gitignore`
+
+### Added
+
+- Comprehensive documentation suite under `ops/docs/` (`commands.md`, `architecture.md`, `universe.md`, `audit.md`, `packages.md`, `finance.md`, `frontend.md`)
+
 ## [0.2.1] - 2026-09-26
 
 ### Added
