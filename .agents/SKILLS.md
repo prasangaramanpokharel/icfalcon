@@ -55,6 +55,7 @@ Also runs as the first step of `falcon p:check`.
 | Run tests | [`testingStandard/SKILL.md`](skills/testingStandard/SKILL.md) |
 | Write Motoko | [`motokoStandard/writingMotokoStandard/SKILL.md`](skills/motokoStandard/writingMotokoStandard/SKILL.md) |
 | API endpoints | [`endpoints/SKILL.md`](skills/endpointsStandard/SKILL.md) |
+| Hub packages & modules | [`packageStandard/SKILL.md`](skills/packageStandard/SKILL.md) |
 | Multi-canister event mesh | [`falconUniverseStandard/SKILL.md`](skills/falconUniverseStandard/SKILL.md) |
 
 ---

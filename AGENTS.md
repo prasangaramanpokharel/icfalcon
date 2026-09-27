@@ -61,6 +61,7 @@ falcon p:check --local      # skills + code audit + backend + frontend build
 | Scaffold CLI | `falcon m:f <Name>` |
 | Code audit / linter | `falcon audit code:motoko` / `falcon a:c:m` |
 | Layer rules | `.agents/skills/layeringStandard/SKILL.md` |
+| Hub packages / modules | `.agents/skills/packageStandard/SKILL.md` |
 | Multi-canister mesh | `.agents/skills/falconUniverseStandard/SKILL.md` |
 | Code style | `.agents/skills/codingStandard/SKILL.md` |
 | Errors | `.agents/skills/errorHandlingStandard/SKILL.md` |
@@ -175,6 +176,7 @@ Read [`ops/docs/`](ops/docs/README.md) for full project and architecture documen
 | [ops/docs/frontend.md](ops/docs/frontend.md) | Next.js frontend with `@icp-sdk/core` & `@icp-sdk/auth` |
 | [ops/README.md](ops/README.md) | Ops folder structure & tooling |
 | [ops/templates/feature/](ops/templates/feature/) | `falcon m:f` scaffold templates |
+| [ops/templates/prompt/saas/](ops/templates/prompt/saas/README.md) | 10 ready-made full-stack SaaS product prompts |
 
 ## Safety
 

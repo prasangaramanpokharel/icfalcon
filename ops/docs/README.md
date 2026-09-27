@@ -15,6 +15,7 @@ Welcome to the official developer documentation for **IcFalcon** — an enterpri
 | [**Package Ecosystem**](packages.md) | `icp-hub` package manager (`falcon add pkg <name>`), 65+ audited Motoko packages, and publishing |
 | [**Money & Payments Layer**](finance.md) | ICPay integration, subaccount derivation, ICRC-1 / ICRC-2 ledger, custodial wallets, and controller management |
 | [**Frontend Architecture**](frontend.md) | Next.js 15, `@icp-sdk/core` & `@icp-sdk/auth`, Internet Identity modal, and static asset canister export |
+| [**Ready-Made SaaS Prompts**](../templates/prompt/saas/README.md) | 10 ready-made AI prompts to build complete full-stack SaaS apps (AI copywriter, feedback board, invoicing, link shortener, etc.) |
 
 ---
 
