@@ -41,6 +41,7 @@ Everything runs via the global CLI: `falcon <command> [--local] [args]`
 | **Users** | `falcon users:count` | `falcon u:count` | Status query of registered users and counters |
 | **Frontend** | `falcon frontend:dev` | `falcon f:dev` | Launch Next.js local development server |
 | | `falcon frontend:build` | `falcon f:build` | Static export build for asset canister hosting |
+| | `falcon frontend:production` | `falcon f:production` / `f:prod` | Serve static production build (`npx serve@latest out`) |
 
 ---
 

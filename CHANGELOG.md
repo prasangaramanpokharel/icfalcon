@@ -2,6 +2,15 @@
 
 All notable changes to IcFalcon are documented here.
 
+## [0.2.3] - 2026-09-28
+
+### Added
+
+- **Frontend Production Preview (`falcon f:production` / `falcon f:prod`)**: Command to serve the static production bundle using `npx serve@latest out` inside `frontend/`
+- **Package Standard Skill (`packageStandard`)**: AI skill for discovering, mapping, and enforcing icp-hub package adoption
+- **Hub Registry Expansion**: 21 enterprise packages registered in `hub/index.json` (117 total) and synced to GitHub `master` and `main`
+- **10 Ready-Made SaaS Product Prompts**: Copy-pasteable AI prompts under `ops/templates/prompt/saas/` with full specifications
+
 ## [0.2.2] - 2026-09-27
 
 ### Fixed

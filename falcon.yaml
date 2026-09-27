@@ -130,6 +130,11 @@ commands:
     steps:
       - npm run build --prefix frontend
 
+  frontend:production:
+    confirm: false
+    steps:
+      - cd frontend && npx serve@latest out
+
   # ── scaffold (Laravel-style) ───────────────────────
   make:feature:
     confirm: false
@@ -181,6 +186,8 @@ aliases:
   # frontend
   f:dev: frontend:dev
   f:build: frontend:build
+  f:production: frontend:production
+  f:prod: frontend:production
   # scaffold
   m:f: make:feature
   m:feature: make:feature

@@ -83,6 +83,11 @@ falcon f:dev
 
 # Build static bundle for production
 falcon f:build
+
+# Preview static production export locally (npx serve@latest out)
+falcon f:production
+# or alias:
+falcon f:prod
 ```
 
-Static export produces pure HTML/CSS/JS inside `frontend/out/`, ready for direct deployment to the IC asset canister via `dfx deploy` or `falcon p:ship`.
+Static export produces pure HTML/CSS/JS inside `frontend/out/`, ready for direct deployment to the IC asset canister via `dfx deploy` or `falcon p:ship`, or local testing via `falcon f:production`.

@@ -89,6 +89,8 @@ ${GREEN}Users${NC}
 ${GREEN}Frontend${NC}
   f:dev           Next.js dev server
   f:build         Static export build
+  f:production    Serve static production build (npx serve@latest out)
+  f:prod          Short alias
 
 ${GREEN}Packages${NC} ${DIM}(like go get)${NC}
   add pkg <name>    Install package from icp-hub
