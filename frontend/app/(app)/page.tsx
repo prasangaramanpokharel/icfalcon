@@ -29,14 +29,14 @@ export default function HomePage() {
           />
           <span className="font-semibold tracking-tight">IcFalcon</span>
           <Badge variant="outline" className="text-[11px] font-mono">
-            v0.2.3
+            v0.2.4
           </Badge>
         </div>
 
         <nav className="flex items-center gap-2">
           <ThemeToggle />
           <a
-            href="https://icpay.app/icfalcon"
+            href="https://raw.githubusercontent.com/prasangapokharel/IcFalcon/refs/heads/main/docs/README.md"
             target="_blank"
             rel="noopener noreferrer"
             className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
@@ -72,7 +72,7 @@ export default function HomePage() {
 
         <div className="mt-5 flex items-center justify-center gap-2.5">
           <a
-            href="https://icpay.app/icfalcon"
+            href="https://raw.githubusercontent.com/prasangapokharel/IcFalcon/refs/heads/main/docs/README.md"
             target="_blank"
             rel="noopener noreferrer"
             className={cn(buttonVariants({ variant: "default", size: "sm" }))}

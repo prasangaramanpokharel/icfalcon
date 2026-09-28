@@ -2,6 +2,14 @@
 
 All notable changes to IcFalcon are documented here.
 
+## [0.2.4] - 2026-09-28
+
+### Added
+
+- **Ultra-Premium Landing Page**: Redesigned landing page with luminous background meteors, animated ShineBorder backend status card, and icPay partner attribution
+- **Interactive Theme Switch**: Instant reactive dark/light mode toggle in the header with persistent localStorage caching and zero SSR hydration flicker
+- **Documentation & Commands CTAs**: Prominent quick links for Framework Documentation and CLI Commands Reference
+
 ## [0.2.3] - 2026-09-28
 
 ### Added
