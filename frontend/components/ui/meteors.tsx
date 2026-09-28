@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-
 import { cn } from "@/lib/utils"
 
 interface MeteorsProps {
@@ -15,45 +14,41 @@ interface MeteorsProps {
 }
 
 export const Meteors = ({
-  number = 20,
+  number = 25,
   minDelay = 0.2,
   maxDelay = 1.2,
   minDuration = 2,
-  maxDuration = 10,
+  maxDuration = 8,
   angle = 215,
   className,
 }: MeteorsProps) => {
-  const [meteorStyles, setMeteorStyles] = useState<Array<React.CSSProperties>>(
-    []
-  )
+  const [meteorStyles, setMeteorStyles] = useState<Array<React.CSSProperties>>([])
 
   useEffect(() => {
+    const width = typeof window !== "undefined" ? window.innerWidth : 1400
     const styles = [...new Array(number)].map(() => ({
-      "--angle": -angle + "deg",
-      top: "-10%",
-      left: `${Math.floor(Math.random() * 120) - 10}%`,
-      animationDelay: Math.random() * (maxDelay - minDelay) + minDelay + "s",
-      animationDuration:
-        Math.floor(Math.random() * (maxDuration - minDuration) + minDuration) +
-        "s",
+      "--angle": `${angle}deg`,
+      top: `${Math.floor(Math.random() * 80) - 20}%`,
+      left: `${Math.floor(Math.random() * (width + 400)) - 200}px`,
+      animationDelay: `${(Math.random() * (maxDelay - minDelay) + minDelay).toFixed(2)}s`,
+      animationDuration: `${Math.floor(Math.random() * (maxDuration - minDuration) + minDuration)}s`,
     }))
     setMeteorStyles(styles)
   }, [number, minDelay, maxDelay, minDuration, maxDuration, angle])
 
   return (
     <>
-      {[...meteorStyles].map((style, idx) => (
-        // Meteor Head
+      {meteorStyles.map((style, idx) => (
         <span
           key={idx}
-          style={{ ...style }}
+          style={style}
           className={cn(
-            "animate-meteor pointer-events-none absolute size-0.5 rotate-(--angle) rounded-full bg-zinc-600 dark:bg-zinc-200 shadow-[0_0_6px_1px_rgba(255,255,255,0.4)]",
+            "animate-meteor pointer-events-none absolute size-0.5 rounded-full bg-slate-500 shadow-[0_0_0_1px_#ffffff10] dark:bg-slate-300",
             className
           )}
         >
           {/* Meteor Tail */}
-          <div className="pointer-events-none absolute top-1/2 -z-10 h-[1px] w-14 -translate-y-1/2 bg-gradient-to-r from-zinc-500/50 dark:from-zinc-400/80 to-transparent" />
+          <div className="pointer-events-none absolute top-1/2 -z-10 h-[1px] w-[50px] -translate-y-1/2 bg-gradient-to-r from-slate-500 to-transparent dark:from-slate-400" />
         </span>
       ))}
     </>

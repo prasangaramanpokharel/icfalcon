@@ -13,8 +13,8 @@ export default function HomePage() {
   return (
     <main className="relative flex h-screen max-h-screen w-full flex-col justify-between overflow-hidden bg-background text-foreground p-6 sm:p-8">
       {/* Background Meteors */}
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <Meteors number={24} minDelay={0.2} maxDelay={1.5} minDuration={3} maxDuration={8} angle={215} />
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <Meteors number={30} minDelay={0.2} maxDelay={1.5} minDuration={2} maxDuration={8} angle={215} />
       </div>
 
       {/* Top Bar */}
