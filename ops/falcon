@@ -3,7 +3,7 @@ set -euo pipefail
 
 # falcon — IcFalcon ops CLI
 
-resolve_root() {
+resolve_cli_root() {
   local source="${BASH_SOURCE[0]}"
   while [ -L "$source" ]; do
     local dir
@@ -14,7 +14,21 @@ resolve_root() {
   cd "$(dirname "$source")/.." && pwd
 }
 
-ROOT="$(resolve_root)"
+CLI_ROOT="$(resolve_cli_root)"
+
+resolve_project_root() {
+  local cur="$PWD"
+  while [[ "$cur" != "/" && -n "$cur" ]]; do
+    if [[ -f "$cur/falcon.yaml" ]]; then
+      echo "$cur"
+      return 0
+    fi
+    cur="$(dirname "$cur")"
+  done
+  echo "$CLI_ROOT"
+}
+
+ROOT="${FALCON_ROOT:-$(resolve_project_root)}"
 CONFIG="${FALCON_CONFIG:-$ROOT/falcon.yaml}"
 BACKEND_DIR="$ROOT/$(grep -E '^backend_dir:' "$CONFIG" 2>/dev/null | head -1 | sed 's/backend_dir: *//' || echo backend)"
 
@@ -31,7 +45,8 @@ else
   DIM=''
   NC=''
 fi
-BANNER_FILE="$ROOT/ops/cmd/prefixAscii.txt"
+BANNER_FILE="$CLI_ROOT/ops/cmd/prefixAscii.txt"
+[[ -f "$BANNER_FILE" ]] || BANNER_FILE="$ROOT/ops/cmd/prefixAscii.txt"
 
 print_banner() {
   [[ -f "$BANNER_FILE" ]] || return 0
@@ -240,6 +255,9 @@ run_command() {
 
   if [[ -n "$script" ]]; then
     local script_path="$ROOT/$script"
+    if [[ ! -f "$script_path" && -f "$CLI_ROOT/$script" ]]; then
+      script_path="$CLI_ROOT/$script"
+    fi
     [[ -x "$script_path" || -f "$script_path" ]] || fail "script not found: $script_path"
     chmod +x "$script_path" 2>/dev/null || true
     bash "$script_path" "${extra_args[@]}"
@@ -308,7 +326,9 @@ main() {
         export FALCON_BACKEND_DIR="$BACKEND_DIR"
         print_banner
         step "pkg:add"
-        bash "$ROOT/ops/pkg-add.sh" "${filtered_args[1]:?usage: falcon add pkg <name>}"
+        local script="$ROOT/ops/pkg-add.sh"
+        [[ -f "$script" ]] || script="$CLI_ROOT/ops/pkg-add.sh"
+        bash "$script" "${filtered_args[1]:?usage: falcon add pkg <name>}"
         exit 0
       fi
       fail "unknown add command (try: falcon add pkg <name>)"

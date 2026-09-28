@@ -2,6 +2,14 @@
 
 All notable changes to IcFalcon are documented here.
 
+## [0.2.5] - 2026-09-28
+
+### Fixed
+
+- **Global CLI Working Directory Context**: `falcon` now intelligently walks up from `$PWD` to discover the enclosing project's `falcon.yaml` instead of resolving to the installation symlink directory, ensuring commands (`falcon add pkg`, `falcon b:deploy`, etc.) execute on the user's active project
+- **Self-Healing Package Reinstall**: `falcon add pkg` checks disk directory state and re-downloads missing package files into `backend/pkg/<name>` even if an entry existed in `icp.pkg`
+- **Fallback CLI Scripts**: Automatic fallback from local project `ops/` to `CLI_ROOT/ops/` when executing global falcon commands across projects
+
 ## [0.2.4] - 2026-09-28
 
 ### Added
