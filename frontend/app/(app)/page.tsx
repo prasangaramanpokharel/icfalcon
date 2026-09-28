@@ -70,7 +70,7 @@ export default function HomePage() {
           <BackendStatus />
         </div>
 
-        <div className="mt-5">
+        <div className="mt-5 flex items-center justify-center gap-2.5">
           <a
             href="https://icpay.app/icfalcon"
             target="_blank"
@@ -78,6 +78,14 @@ export default function HomePage() {
             className={cn(buttonVariants({ variant: "default", size: "sm" }))}
           >
             Documentation
+          </a>
+          <a
+            href="https://icpay.app/products/icFalcon/commands"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            Commands
           </a>
         </div>
       </div>
