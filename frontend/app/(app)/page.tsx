@@ -1,7 +1,6 @@
 "use client"
 
 import Image from "next/image"
-import Link from "next/link"
 import { BackendStatus } from "@/components/home/BackendStatus"
 import { Meteors } from "@/components/ui/meteors"
 import { Badge } from "@/components/ui/badge"
@@ -72,12 +71,14 @@ export default function HomePage() {
         </div>
 
         <div className="mt-5">
-          <Link
-            href="/wallet"
+          <a
+            href="https://icpay.app/icfalcon"
+            target="_blank"
+            rel="noopener noreferrer"
             className={cn(buttonVariants({ variant: "default", size: "sm" }))}
           >
-            Open wallet demo
-          </Link>
+            Documentation
+          </a>
         </div>
       </div>
 
