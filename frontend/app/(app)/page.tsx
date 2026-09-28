@@ -1,38 +1,113 @@
-import { BackendStatus } from "@/components/home/BackendStatus"
+"use client"
+
 import Image from "next/image"
 import Link from "next/link"
+import { BackendStatus } from "@/components/home/BackendStatus"
+import { Meteors } from "@/components/ui/meteors"
+import { Badge } from "@/components/ui/badge"
+import { buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-6 py-12">
-      <div className="flex w-full max-w-lg flex-col items-center gap-10 text-center">
+    <main className="relative flex h-screen max-h-screen w-full flex-col justify-between overflow-hidden bg-background text-foreground p-6 sm:p-8">
+      {/* Background Meteors */}
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <Meteors number={24} minDelay={0.2} maxDelay={1.5} minDuration={3} maxDuration={8} angle={215} />
+      </div>
+
+      {/* Top Bar */}
+      <header className="relative z-10 flex w-full items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <Image
+            src="/brand/logo.png"
+            alt="IcFalcon Logo"
+            width={28}
+            height={28}
+            className="h-7 w-7"
+            priority
+          />
+          <span className="font-semibold tracking-tight">IcFalcon</span>
+          <Badge variant="outline" className="text-[11px] font-mono">
+            v0.2.3
+          </Badge>
+        </div>
+
+        <nav className="flex items-center gap-2">
+          <Link
+            href="/wallet"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            Wallet Demo
+          </Link>
+          <a
+            href="https://icpay.app/icfalcon"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+          >
+            Docs
+          </a>
+        </nav>
+      </header>
+
+      {/* Center Hero */}
+      <div className="relative z-10 flex flex-col items-center justify-center text-center my-auto">
         <Image
           src="/brand/logo.png"
           alt="IcFalcon"
-          width={320}
-          height={380}
+          width={200}
+          height={200}
           priority
-          className="h-auto w-full max-w-xs drop-shadow-2xl sm:max-w-sm"
+          className="h-auto w-36 sm:w-44 drop-shadow-xl"
         />
 
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex flex-col gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Welcome to IcFalcon
-            </h1>
-            <p className="text-base text-muted-foreground sm:text-lg">
-              The Motoko framework for Internet Computer apps.
-            </p>
-          </div>
+        <div className="mt-4 flex flex-col items-center gap-1.5">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl text-foreground">
+            Welcome to IcFalcon
+          </h1>
+          <p className="max-w-md text-sm text-muted-foreground sm:text-base">
+            The Motoko framework for Internet Computer apps.
+          </p>
+        </div>
+
+        <div className="mt-6 w-full max-w-sm">
           <BackendStatus />
+        </div>
+
+        <div className="mt-5">
           <Link
             href="/wallet"
-            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+            className={cn(buttonVariants({ variant: "default", size: "sm" }))}
           >
             Open wallet demo
           </Link>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="relative z-10 flex w-full items-center justify-between text-xs text-muted-foreground">
+        <span>© {new Date().getFullYear()} IcFalcon</span>
+
+        <a
+          href="https://icpay.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-full border bg-card/60 px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
+        >
+          <span className="text-[11px]">Powered by</span>
+          <div className="flex items-center gap-1.5 font-semibold text-foreground">
+            <Image
+              src="/brand/partner.png"
+              alt="icPay"
+              width={16}
+              height={16}
+              className="h-4 w-4 rounded-xs"
+            />
+            <span>icPay</span>
+          </div>
+        </a>
+      </footer>
     </main>
   )
 }
