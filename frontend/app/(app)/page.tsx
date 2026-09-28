@@ -6,6 +6,7 @@ import { BackendStatus } from "@/components/home/BackendStatus"
 import { Meteors } from "@/components/ui/meteors"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { cn } from "@/lib/utils"
 
 export default function HomePage() {
@@ -34,12 +35,7 @@ export default function HomePage() {
         </div>
 
         <nav className="flex items-center gap-2">
-          <Link
-            href="/wallet"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-          >
-            Wallet Demo
-          </Link>
+          <ThemeToggle />
           <a
             href="https://icpay.app/icfalcon"
             target="_blank"
@@ -62,11 +58,11 @@ export default function HomePage() {
           className="h-auto w-36 sm:w-44 drop-shadow-xl"
         />
 
-        <div className="mt-4 flex flex-col items-center gap-1.5">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl text-foreground">
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <h1 className="select-none bg-gradient-to-b from-white via-zinc-200 to-zinc-600 bg-clip-text text-center text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl lg:text-6xl">
             Welcome to IcFalcon
           </h1>
-          <p className="max-w-md text-sm text-muted-foreground sm:text-base">
+          <p className="max-w-md text-sm text-zinc-400 sm:text-base">
             The Motoko framework for Internet Computer apps.
           </p>
         </div>
