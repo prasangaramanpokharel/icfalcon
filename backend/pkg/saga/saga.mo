@@ -7,8 +7,8 @@ import Nat "mo:core/Nat";
 module {
   public type Step<Ctx> = {
     name : Text;
-    execute : Ctx -> async* Result.Result<Ctx, Text>;
-    compensate : Ctx -> async* ();
+    execute : Ctx -> async Result.Result<Ctx, Text>;
+    compensate : Ctx -> async ();
   };
 
   public class SagaOrchestrator<Ctx>() {
@@ -18,26 +18,27 @@ module {
       Queue.pushBack(steps, step);
     };
 
-    public func run(initialContext : Ctx) : async* Result.Result<Ctx, Text> {
+    public func run(initialContext : Ctx) : async Result.Result<Ctx, Text> {
       let allSteps = Queue.toArray(steps);
       let executedSteps = Queue.empty<Step<Ctx>>();
       var currentCtx = initialContext;
 
       for (step in allSteps.values()) {
         try {
-          let stepResult = await* step.execute(currentCtx);
+          let stepResult = await step.execute(currentCtx);
           switch (stepResult) {
             case (#ok(nextCtx)) {
               currentCtx := nextCtx;
               Queue.pushBack(executedSteps, step);
             };
             case (#err(reason)) {
-              await* rollback(executedSteps, currentCtx);
+              // Rollback in reverse order
+              await rollback(executedSteps, currentCtx);
               return #err("Saga failed at step [" # step.name # "]: " # reason);
             };
           };
-        } catch (_e) {
-          await* rollback(executedSteps, currentCtx);
+        } catch (e) {
+          await rollback(executedSteps, currentCtx);
           return #err("Saga trapped at step [" # step.name # "]");
         };
       };
@@ -45,15 +46,16 @@ module {
       #ok(currentCtx);
     };
 
-    private func rollback(executed : Queue.Queue<Step<Ctx>>, ctx : Ctx) : async* () {
+    private func rollback(executed : Queue.Queue<Step<Ctx>>, ctx : Ctx) : async () {
       let arr = Queue.toArray(executed);
       var i = arr.size();
       while (i > 0) {
         i -= 1;
         let step = arr[i];
         try {
-          await* step.compensate(ctx);
+          await step.compensate(ctx);
         } catch (_e) {
+          // Compensations should not trap
           ();
         };
       };

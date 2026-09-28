@@ -14,10 +14,70 @@
       "installed": "2026-08-19T03:57:23Z"
     },
     "wallet": {
-      "version": "1.0.0",
+      "version": "2.0.0",
       "path": "pkg/wallet",
       "source": "packages/wallet",
-      "installed": "2026-08-19T03:57:24Z"
+      "installed": "2026-09-28T10:33:51Z"
+    },
+    "crud": {
+      "version": "1.0.0",
+      "path": "pkg/crud",
+      "source": "packages/crud",
+      "installed": "2026-09-28T10:26:32Z"
+    },
+    "rbac": {
+      "version": "1.0.0",
+      "path": "pkg/rbac",
+      "source": "packages/rbac",
+      "installed": "2026-09-28T10:27:48Z"
+    },
+    "logger": {
+      "version": "1.0.0",
+      "path": "pkg/logger",
+      "source": "packages/logger",
+      "installed": "2026-09-28T10:34:13Z"
+    },
+    "icrc1": {
+      "version": "2.0.0",
+      "path": "pkg/icrc1",
+      "source": "packages/icrc1",
+      "installed": "2026-09-28T10:33:46Z"
+    },
+    "rate-limit": {
+      "version": "1.0.0",
+      "path": "pkg/rate-limit",
+      "source": "packages/rate-limit",
+      "installed": "2026-09-28T10:33:47Z"
+    },
+    "transfer": {
+      "version": "1.0.0",
+      "path": "pkg/transfer",
+      "source": "packages/transfer",
+      "installed": "2026-09-28T10:33:48Z"
+    },
+    "ledger": {
+      "version": "2.0.0",
+      "path": "pkg/ledger",
+      "source": "packages/ledger",
+      "installed": "2026-09-28T10:33:52Z"
+    },
+    "subaccount": {
+      "version": "1.0.0",
+      "path": "pkg/subaccount",
+      "source": "packages/subaccount",
+      "installed": "2026-09-28T10:33:53Z"
+    },
+    "saga": {
+      "version": "1.0.0",
+      "path": "pkg/saga",
+      "source": "packages/saga",
+      "installed": "2026-09-28T10:34:44Z"
+    },
+    "discord": {
+      "version": "1.0.0",
+      "path": "pkg/discord",
+      "source": "packages/discord",
+      "installed": "2026-09-28T10:34:44Z"
     }
   }
 }

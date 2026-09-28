@@ -70,7 +70,7 @@ except:
     pass
 " 2>/dev/null)"
     
-    if [[ "$installed_version" == "$version" ]]; then
+    if [[ "$installed_version" == "$version" && -d "${PKG_DIR}/${name}" && -n "$(ls -A "${PKG_DIR}/${name}" 2>/dev/null)" ]]; then
       prog_info "Package" "$name@$version already installed"
       return 0
     fi
