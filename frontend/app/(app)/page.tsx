@@ -59,10 +59,10 @@ export default function HomePage() {
         />
 
         <div className="mt-4 flex flex-col items-center gap-2">
-          <h1 className="select-none bg-gradient-to-b from-white via-zinc-200 to-zinc-600 bg-clip-text text-center text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl lg:text-6xl">
+          <h1 className="select-none bg-gradient-to-b from-zinc-950 via-zinc-800 to-zinc-500 dark:from-white dark:via-zinc-200 dark:to-zinc-600 bg-clip-text text-center text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl lg:text-6xl">
             Welcome to IcFalcon
           </h1>
-          <p className="max-w-md text-sm text-zinc-400 sm:text-base">
+          <p className="max-w-md text-sm text-muted-foreground sm:text-base">
             The Motoko framework for Internet Computer apps.
           </p>
         </div>
