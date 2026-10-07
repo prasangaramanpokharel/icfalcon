@@ -5,7 +5,7 @@ const fs = require("fs")
 const path = require("path")
 const os = require("os")
 
-const REPO = "https://github.com/prasangapokharel/IcFalcon.git"
+const REPO = "https://gitlab.com/prasangapokharel/icfalcon.git"
 const args = process.argv.slice(2).filter((arg) => arg !== "--")
 const projectName = args[0]
 

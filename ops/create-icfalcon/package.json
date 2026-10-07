@@ -1,17 +1,17 @@
 {
   "name": "create-icfalcon",
-  "version": "0.2.5",
-  "description": "Scaffold an IcFalcon Internet Computer app in one command — Motoko backend, Next.js frontend, falcon CLI.",
+  "version": "0.2.6",
+  "description": "Scaffold an IcFalcon Internet Computer app in one command \u2014 Motoko backend, Next.js frontend, falcon CLI.",
   "license": "MIT",
   "author": "prasangapokharel",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/prasangapokharel/IcFalcon.git",
+    "url": "git+https://gitlab.com/prasangapokharel/icfalcon.git",
     "directory": "ops/create-icfalcon"
   },
   "homepage": "https://icpay.app/icfalcon",
   "bugs": {
-    "url": "https://github.com/prasangapokharel/IcFalcon/issues"
+    "url": "https://gitlab.com/prasangapokharel/icfalcon/-/issues"
   },
   "keywords": [
     "icfalcon",

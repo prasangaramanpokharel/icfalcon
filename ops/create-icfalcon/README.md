@@ -1,6 +1,6 @@
 # create-icfalcon
 
-Scaffold an [IcFalcon](https://github.com/prasangapokharel/IcFalcon) app — Motoko backend, Next.js frontend, `falcon` CLI.
+Scaffold an [IcFalcon](https://gitlab.com/prasangapokharel/icfalcon) app — Motoko backend, Next.js frontend, `falcon` CLI.
 
 ## Usage
 
@@ -18,7 +18,7 @@ npx create-icfalcon my-app
 
 ## What runs automatically
 
-1. Clone IcFalcon from GitHub (wallet demo, finance packages, `falcon` CLI)
+1. Clone IcFalcon from GitLab (wallet demo, finance packages, `falcon` CLI)
 2. `./ops/install.sh` — install `falcon` CLI
 3. `falcon s:init` — backend, deploy, frontend, dev server
 
@@ -35,5 +35,5 @@ Install these **before** running `npm create`:
 
 ## Links
 
-- GitHub: https://github.com/prasangapokharel/IcFalcon
-- Docs: https://github.com/prasangapokharel/IcFalcon/tree/main/docs
+- GitLab: https://gitlab.com/prasangapokharel/icfalcon
+- Docs: https://gitlab.com/prasangapokharel/icfalcon/tree/main/docs
