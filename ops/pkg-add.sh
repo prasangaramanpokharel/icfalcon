@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="${FALCON_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/..}"
-HUB_URL="${ICP_HUB_URL:-https://raw.githubusercontent.com/prasangapokharel/icp-hub/main}"
+HUB_URL="${ICP_HUB_URL:-https://gitlab.com/prasangapokharel/falconpkg/-/raw/main}"
 PKG_DIR="${FALCON_BACKEND_DIR}/pkg"
 LOCK_FILE="${FALCON_BACKEND_DIR}/icp.pkg"
 
@@ -96,7 +96,7 @@ except:
     python3 -c "
 import json, os
 from datetime import datetime, timezone
-lock = {'registry': 'github.com/prasangapokharel/icp-hub', 'packages': {}}
+lock = {'registry': 'gitlab.com/prasangapokharel/falconpkg', 'packages': {}}
 if os.path.exists('$LOCK_FILE'):
     with open('$LOCK_FILE') as f:
         lock = json.load(f)

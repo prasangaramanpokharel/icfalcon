@@ -2,7 +2,7 @@
 
 **icp-hub** is the community package registry for the Internet Computer, integrated directly into the `falcon` CLI (similar to `go get` or `cargo add`).
 
-Registry: [github.com/prasangapokharel/icp-hub](https://github.com/prasangapokharel/icp-hub)
+Registry: [gitlab.com/prasangapokharel/falconpkg](https://gitlab.com/prasangapokharel/falconpkg)
 
 ---
 

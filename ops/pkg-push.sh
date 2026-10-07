@@ -41,5 +41,5 @@ fi
 
 echo "  + $DEST"
 echo ""
-echo "Next: commit hub/ and push to github.com/prasangapokharel/icp-hub"
+echo "Next: commit hub/ and push to gitlab.com/prasangapokharel/falconpkg"
 echo "  cd hub && git add . && git commit -m \"add pkg $NAME\" && git push"

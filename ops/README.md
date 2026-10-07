@@ -44,4 +44,4 @@ IcFalcon/
 └── README.md
 ```
 
-`hub/` is gitignored — separate repo at github.com/prasangapokharel/icp-hub
+`hub/` is gitignored — separate repo at gitlab.com/prasangapokharel/falconpkg
