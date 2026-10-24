@@ -13,13 +13,37 @@ layers in order; do not skip steps.
 
 | Step skill | Detail |
 |---|---|
-| Architecture | [`layering/SKILL.md`](../layeringStandard/SKILL.md) |
+| Architecture | [`layeringStandard/SKILL.md`](../layeringStandard/SKILL.md) |
+| Multi-Canister Mesh | [`falconUniverseStandard/SKILL.md`](../falconUniverseStandard/SKILL.md) |
 | Code style | [`codingStandard/SKILL.md`](../codingStandard/SKILL.md) |
-| Errors | [`errorHandling/SKILL.md`](../errorHandlingStandard/SKILL.md) |
-| Migrations | [`migration/SKILL.md`](../migrationStandard/SKILL.md) |
+| Errors | [`errorHandlingStandard/SKILL.md`](../errorHandlingStandard/SKILL.md) |
+| Migrations | [`migrationStandard/SKILL.md`](../migrationStandard/SKILL.md) |
 | Tests | [`testingStandard/SKILL.md`](../testingStandard/SKILL.md) |
 | ICP money | [`financeStandard/walletStandard`](../financeStandard/walletStandard/SKILL.md) |
-| Single endpoint only | [`endpoints/SKILL.md`](../endpointsStandard/SKILL.md) |
+| Single endpoint only | [`endpointsStandard/SKILL.md`](../endpointsStandard/SKILL.md) |
+
+---
+
+## Decision Gate 0 — Same Canister vs. Separate Micro-Canister
+
+Before writing code or scaffolding, determine the architectural boundary:
+
+| Factor | Same Canister (`falcon m:f <Name>`) | Separate Canister (`falcon m:c <Name>`) |
+|---|---|---|
+| **Best for** | Lightweight domain logic (e.g. `Profile`, `Tags`, `Cart`) | Background tasks, timers/crons (e.g. `Cronyfy`), high-frequency events, AI agents, heavy scrapers/indexers |
+| **Custodial Isolation** | Non-custodial domain entities | **Mandatory** if the primary canister custodies real funds (`wallet`). Never co-locate crons or heavy loops with funds! |
+| **Execution Latency** | Sub-millisecond internal synchronous calls | Asynchronous messaging via Falcon Universe pub/sub (`Universe.publish`) |
+| **Cycle & Memory Limits** | Shares 400 GB stable memory and single cycle balance | Dedicated 400 GB stable memory and isolated cycle budget |
+| **Migration Required?** | ❌ **NO** (adding new stable maps never requires migration) | ❌ **NO** (existing canisters are completely untouched; zero upgrade risk) |
+| **CLI Scaffold** | `falcon m:f <Name>` | `falcon m:canister <Name>` (or `falcon m:c <Name>`) |
+
+> [!CAUTION]
+> **Custodial Isolation Principle**:
+> If a canister manages money or custodial wallets (`wallet`, `icp_wallet_backend`), **NEVER** run continuous background schedulers (e.g. `Cronyfy`), automated recurring triggers, batch loops, or complex third-party HTTP outcalls in the same canister. A cycle exhaustion, infinite tick, or trapped update will freeze wallet operations. Isolate compute in a separate micro-canister (`falcon m:c <Name>`) and connect them via Falcon Universe pub/sub ([`falconUniverseStandard`](../falconUniverseStandard/SKILL.md)).
+
+> [!IMPORTANT]
+> **Migration Rule**:
+> Adding a new feature, table, map, or micro-canister **NEVER requires an upgrade migration**. Motoko's persistent actor system safely initializes new stable variables. Migrations in `migrations/` are **ONLY** needed when changing the schema or field types of an **already-persisted record**.
 
 ---
 
@@ -27,7 +51,10 @@ layers in order; do not skip steps.
 
 ```mermaid
 flowchart TD
-  A[1. Plan: stable vs transient vs migration] --> B[2. types.mo]
+  Z{Feature Architecture?} -->|Heavy / Timers / Cron / Money Isolation| C1["Standalone Micro-Canister: falcon m:c <Name>"]
+  C1 --> C2["Wire Falcon Universe Pub/Sub (docs/universe.md)"]
+  Z -->|In-Canister Domain Module: falcon m:f <Name>| A[1. Plan: stable vs transient vs migration]
+  A --> B[2. types.mo]
   B --> C[3. storage/]
   C --> D{Persisted field change?}
   D -->|yes| E[4. migrations/ + upgrade test]
@@ -50,6 +77,8 @@ Answer these first:
 
 | Question | If yes | If no |
 |---|---|---|
+| Background worker / Cron / Heavy compute? | Separate micro-canister via `falcon m:c <Name>` (Custodial Isolation) | In-canister module via `falcon m:f <Name>` |
+| Adding brand new feature map/table? | Declare stable `let` in actor — **no migration needed** | — |
 | New data must survive upgrade? | `let` stable map in actor — **not** `transient` | `transient let` OK |
 | New field on **existing** stored record? | `migrations/<Name>.mo` required | Skip migration |
 | Derived lookup index? | `transient` + `reindex()` at startup in `main.mo` | Store in stable map |

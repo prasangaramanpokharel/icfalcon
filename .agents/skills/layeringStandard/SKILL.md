@@ -44,11 +44,17 @@ backend/pkg/          # shared via mo:pkg/...
 
 ## Scaffold fast
 
+| Command | Role | When to use |
+|---|---|---|
+| `falcon m:f <Name>` | In-canister feature | Lightweight domain logic (Profile, Tags, Cart) sharing the same actor |
+| `falcon m:c <Name>` | Standalone micro-canister | Heavy tasks, crons/schedulers (`Cronyfy`), timers, AI agents, or when isolating money |
+
 ```bash
-falcon m:f Order    # creates all layers + wires main.mo
+falcon m:f Order          # in-canister feature: creates all layers + wires main.mo
+falcon m:c Cronyfy        # micro-canister: standalone canister + Falcon Universe pub/sub
 ```
 
-Templates: [`ops/templates/feature/`](../../../ops/templates/feature/)
+Templates: [`ops/templates/feature/`](../../../ops/templates/feature/) and [`ops/templates/canister/`](../../../ops/templates/canister/)
 
 ## Related
 
@@ -56,5 +62,6 @@ Templates: [`ops/templates/feature/`](../../../ops/templates/feature/)
 |---|---|
 | Coding standard | [`codingStandard/SKILL.md`](../codingStandard/SKILL.md) |
 | Integration | [`integrationStandard/SKILL.md`](../integrationStandard/SKILL.md) |
-| Errors | [`errorHandling/SKILL.md`](../errorHandlingStandard/SKILL.md) |
-| Migrations | [`migration/SKILL.md`](../migrationStandard/SKILL.md) |
+| Multi-Canister Mesh | [`falconUniverseStandard/SKILL.md`](../falconUniverseStandard/SKILL.md) |
+| Errors | [`errorHandlingStandard/SKILL.md`](../errorHandlingStandard/SKILL.md) |
+| Migrations | [`migrationStandard/SKILL.md`](../migrationStandard/SKILL.md) |
