@@ -9,7 +9,12 @@ fail() { echo "error: $1" >&2; exit 1; }
 [[ -n "$NAME_RAW" ]] || fail "usage: falcon make:feature <Name>  (e.g. Order, Product)"
 
 to_pascal() {
-  echo "$1" | sed -E 's/(^|[-_])([a-z])/\U\2/g' | sed 's/[-_]//g'
+  perl -e '
+    my $s = shift;
+    $s =~ s/(?:^|[-_])([a-z])/uc($1)/ge;
+    $s =~ s/[-_]//g;
+    print "$s\n";
+  ' "$1"
 }
 
 to_camel() {
@@ -58,14 +63,11 @@ render "$TPL/Api.mo.tpl" "$BACKEND/api/v1/${NAME}.mo"
 
 if ! grep -q "public type ${NAME} =" "$BACKEND/types.mo"; then
   step "types.mo — add ${NAME} type"
-  sed -i "/public type UserProfile = {/i\\
-  public type ${NAME} = {\\
-    id : Text;\\
-    name : Text;\\
-    owner : Principal;\\
-    createdAt : Int;\\
-  };\\
-" "$BACKEND/types.mo"
+  perl -i -pe '
+    if (/public type HealthStatus = \{/) {
+      print "  public type '"$NAME"' = {\n    id : Text;\n    name : Text;\n    owner : Principal;\n    createdAt : Int;\n  };\n\n";
+    }
+  ' "$BACKEND/types.mo"
 fi
 
 mkdir -p "$FRONTEND/services/$kebab" "$FRONTEND/components/$kebab"
@@ -79,15 +81,21 @@ render "$TPL/panel.tsx.tpl" "$FRONTEND/components/$kebab/${kebab}-panel.tsx"
 MAIN="$BACKEND/main.mo"
 if ! grep -q "${NAME}Api" "$MAIN"; then
   step "main.mo — wire ${NAME} module"
-  sed -i "/import FeatureApi/a import ${NAME}Api \"api/v1/${NAME}\";" "$MAIN"
-  sed -i "/import FeatureService/a import ${NAME}Service \"services/${NAME}Service\";" "$MAIN"
-  sed -i "/import FeatureStorage/a import ${NAME}Storage \"storage/${NAME}Storage\";" "$MAIN"
-  sed -i "/let features = FeatureStorage.createFeatureMap();/a\\
-  let ${name}s = ${NAME}Storage.create${NAME}Map();" "$MAIN"
-  sed -i "/transient let featureService = FeatureService.create(features, users);/a\\
-  transient let ${name}Service = ${NAME}Service.create(${name}s, users);" "$MAIN"
-  sed -i "/include FeatureApi(featureService, mwConfig);/a\\
-  include ${NAME}Api(${name}Service, mwConfig);" "$MAIN"
+  perl -i -pe '
+    if (/import FeatureApi "api\/v1\/Feature";/) {
+      $_ .= "import '"${NAME}"'Api \"api/v1/'"${NAME}"'\";\n";
+    } elsif (/import FeatureService "services\/FeatureService";/) {
+      $_ .= "import '"${NAME}"'Service \"services/'"${NAME}"'Service\";\n";
+    } elsif (/import FeatureStorage "storage\/FeatureStorage";/) {
+      $_ .= "import '"${NAME}"'Storage \"storage/'"${NAME}"'Storage\";\n";
+    } elsif (/let features = FeatureStorage\.createFeatureMap\(\);/) {
+      $_ .= "  let '"${name}"'s = '"${NAME}"'Storage.create'"${NAME}"'Map();\n";
+    } elsif (/transient let featureService = FeatureService\.create\(features, users\);/) {
+      $_ .= "  transient let '"${name}"'Service = '"${NAME}"'Service.create('"${name}"'s, users);\n";
+    } elsif (/include FeatureApi\(featureService, mwConfig\);/) {
+      $_ .= "  include '"${NAME}"'Api('"${name}"'Service, mwConfig);\n";
+    }
+  ' "$MAIN"
 fi
 
 echo ""

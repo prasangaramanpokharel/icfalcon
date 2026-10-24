@@ -116,13 +116,17 @@ ${GREEN}Packages${NC} ${DIM}(like go get)${NC}
   p:push <name>     Publish local pkg to hub
 
 ${GREEN}Scaffold${NC}
-  m:f <Name>      Create full module (Order, Product, …)
+  m:f <Name>        Create full module in main canister (Order, Product, …)
   m:feature <Name>
+  m:c <Name>        Scaffold standalone micro-canister (Trade, Vault, …)
+  m:canister <Name>   with Falcon Universe mesh wiring
 
 Examples:
   falcon s:init
   falcon r:start
   falcon m:f Order
+  falcon m:c Trade
+  falcon b:deploy --canister trade --local
   falcon b:test --local
   falcon p:ship --local
   falcon c:call status --local
@@ -190,8 +194,7 @@ confirm_mainnet() {
 expand_template() {
   local line="$1"
   local network="$2"
-  local canister
-  canister="$(yaml_value canister)"
+  local canister="${FALCON_CANISTER:-$(yaml_value canister)}"
   line="${line//\{\{canister\}\}/$canister}"
   line="${line//\{\{network\}\}/$network}"
   printf '%s' "$line"
@@ -236,7 +239,7 @@ run_command() {
 
   export FALCON_ROOT="$ROOT"
   export FALCON_BACKEND_DIR="$BACKEND_DIR"
-  export FALCON_CANISTER="$(yaml_value canister)"
+  export FALCON_CANISTER="${FALCON_CANISTER:-$(yaml_value canister)}"
   export FALCON_NETWORK="$network_flag"
 
   if command -v mops >/dev/null 2>&1; then
@@ -260,7 +263,7 @@ run_command() {
     fi
     [[ -x "$script_path" || -f "$script_path" ]] || fail "script not found: $script_path"
     chmod +x "$script_path" 2>/dev/null || true
-    bash "$script_path" "${extra_args[@]}"
+    bash "$script_path" ${extra_args[@]+"${extra_args[@]}"}
     return
   fi
 
@@ -296,14 +299,33 @@ main() {
   shift || true
 
   local local_flag=false
+  local target_canister=""
   local filtered_args=()
-  for arg in "$@"; do
-    if [[ "$arg" == "--local" ]]; then
-      local_flag=true
-    else
-      filtered_args+=("$arg")
-    fi
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --local)
+        local_flag=true
+        shift
+        ;;
+      --canister)
+        target_canister="${2:-}"
+        shift 2 || shift
+        ;;
+      --canister=*)
+        target_canister="${1#--canister=}"
+        shift
+        ;;
+      *)
+        filtered_args+=("$1")
+        shift
+        ;;
+    esac
   done
+
+  if [[ -n "$target_canister" ]]; then
+    export FALCON_CANISTER="$target_canister"
+  fi
 
   local network_flag="--network ic"
   if $local_flag; then
@@ -345,14 +367,14 @@ main() {
     audit)
       if [[ "${filtered_args[0]:-}" == "code:motoko" || "${filtered_args[0]:-}" == "motoko" ]]; then
         command="audit:motoko"
-        filtered_args=("${filtered_args[@]:1}")
+        filtered_args=(${filtered_args[@]+"${filtered_args[@]:1}"})
       else
         command="audit:motoko"
       fi
       ;;
   esac
 
-  run_command "$command" "$network_flag" "${filtered_args[@]}"
+  run_command "$command" "$network_flag" ${filtered_args[@]+"${filtered_args[@]}"}
 }
 
 main "$@"

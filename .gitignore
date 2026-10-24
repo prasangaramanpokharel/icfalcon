@@ -12,7 +12,7 @@ dist/
 backend/.dfx/
 .dfx/
 .config/dfx/
-
+testing/
 # env & secrets
 .env
 .env.*
@@ -47,3 +47,4 @@ backend/Runner.wasm
 test/
 test-*/
 my-app/
+.env

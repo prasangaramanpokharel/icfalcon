@@ -121,7 +121,7 @@ format_fix_file() {
 
   # 2. Strip trailing whitespace
   if grep -qE '[ \t]+$' "$file" 2>/dev/null; then
-    sed -i -E 's/[ \t]+$//' "$file"
+    sed -E 's/[ \t]+$//' "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
     changed=true
   fi
 

@@ -34,7 +34,7 @@ commands:
     steps:
       - dfx canister create {{canister}} {{network}}
       - dfx build {{canister}} {{network}}
-      - dfx deploy {{canister}} --mode=upgrade --wasm-memory-persistence keep {{network}}
+      - dfx deploy {{canister}} --mode=upgrade --wasm-memory-persistence keep {{network}} 2>/dev/null || dfx deploy {{canister}} {{network}}
 
   backend:hash:
     confirm: false
@@ -52,7 +52,7 @@ commands:
     steps:
       - dfx canister create {{canister}} {{network}}
       - dfx build {{canister}} {{network}}
-      - dfx deploy {{canister}} --mode=upgrade --wasm-memory-persistence keep {{network}}
+      - dfx deploy {{canister}} --mode=upgrade --wasm-memory-persistence keep {{network}} 2>/dev/null || dfx deploy {{canister}} {{network}}
       - npm run build --prefix frontend
 
   prod:check:
@@ -86,7 +86,7 @@ commands:
   canister:list:
     confirm: false
     steps:
-      - dfx canister id --all {{network}}
+      - python3 -c 'import json, os; net = "local" if "{{network}}" == "--network local" else "ic"; p = f".dfx/{net}/canister_ids.json" if os.path.exists(f".dfx/{net}/canister_ids.json") else "canister_ids.json"; [(print(f"{k:16} {v.get(net) if isinstance(v, dict) else v}") if os.path.exists(p) else None) for k, v in (json.load(open(p)).items() if os.path.exists(p) else [])]'
 
   canister:id:
     confirm: false
@@ -140,6 +140,10 @@ commands:
     confirm: false
     script: ops/make-feature.sh
 
+  make:canister:
+    confirm: false
+    script: ops/make-canister.sh
+
   # ── packages (go get style) ────────────────────────
   pkg:add:
     confirm: false
@@ -191,6 +195,8 @@ aliases:
   # scaffold
   m:f: make:feature
   m:feature: make:feature
+  m:c: make:canister
+  m:canister: make:canister
   # packages
   add:pkg: pkg:add
   a:p: pkg:add

@@ -39,7 +39,17 @@ function fail(message) {
 }
 
 function hasCommand(name) {
-  const result = spawnSync("bash", ["-lc", `command -v ${name}`], { encoding: "utf8" })
+  const pathDirs = (process.env.PATH || "").split(path.delimiter)
+  for (const dir of pathDirs) {
+    const fullPath = path.join(dir, name)
+    try {
+      if (fs.existsSync(fullPath) && (fs.statSync(fullPath).mode & 0o111)) {
+        return true
+      }
+    } catch {}
+  }
+  const shell = process.env.SHELL || "bash"
+  const result = spawnSync(shell, ["-lc", `command -v ${name}`], { encoding: "utf8" })
   return result.status === 0
 }
 
@@ -177,7 +187,16 @@ process.stdout.write(`  Inside that directory, you can run:\n\n`)
 process.stdout.write(`    ${cyan}falcon f:dev${reset}     Start the Next.js development server\n`)
 process.stdout.write(`    ${cyan}falcon b:test${reset}    Run Motoko backend unit tests\n`)
 process.stdout.write(`    ${cyan}falcon a:c:m${reset}     Audit Motoko code style and layering\n`)
-process.stdout.write(`    ${cyan}falcon m:f <Name>${reset} Scaffold a new feature module\n\n`)
+process.stdout.write(`    ${cyan}falcon m:f <Name>${reset} Scaffold a new feature module\n`)
+process.stdout.write(`    ${cyan}falcon m:c <Name>${reset} Scaffold a micro-canister with Falcon Universe\n\n`)
 process.stdout.write(`  To get started:\n\n`)
 process.stdout.write(`    cd ${projectName}\n`)
 process.stdout.write(`    falcon f:dev\n\n`)
+
+const localBin = localBinPath()
+const inPath = (process.env.PATH || "").split(path.delimiter).includes(localBin)
+if (!inPath) {
+  const rcFile = process.env.SHELL && process.env.SHELL.includes("zsh") ? "~/.zshrc" : "~/.bashrc"
+  process.stdout.write(`  ${cyan}Tip:${reset} Add falcon to your PATH to run it from any terminal:\n`)
+  process.stdout.write(`    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ${rcFile} && source ${rcFile}\n\n`)
+}

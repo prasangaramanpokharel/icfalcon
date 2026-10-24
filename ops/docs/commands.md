@@ -32,6 +32,7 @@ Everything runs via the global CLI: `falcon <command> [--local] [args]`
 | | `falcon pkg:installed` | `falcon p:ls` | List installed packages and lockfile status |
 | | `falcon pkg:push <name>` | `falcon p:push` | Publish local package to registry |
 | **Scaffold** | `falcon make:feature <Name>` | `falcon m:f <Name>` | Scaffold full domain feature (backend + frontend) |
+| | `falcon make:canister <Name>` | `falcon m:c <Name>` | Scaffold standalone micro-canister with Falcon Universe mesh |
 | **Canister** | `falcon canister:status` | `falcon c:status` | Query canister operational status and memory |
 | | `falcon canister:ping` | `falcon c:ping` | Run health ping query |
 | | `falcon canister:id` | `falcon c:id` | Show canister ID |
@@ -115,7 +116,32 @@ falcon m:f Order
 
 ---
 
-### 4. Pre-Flight Checks & Deployment
+### 4. Scaffold Micro-Canister (`falcon m:c <Name>`)
+
+Scaffolds an independent micro-canister wired into the Falcon Universe pub/sub event mesh:
+
+```bash
+falcon m:c Trade
+# or: falcon make:canister Trade
+```
+
+**Automatically creates and wires:**
+- `backend/canisters/trade/main.mo`: Persistent actor configured with a Universe node, 1,000-event deduplication window, transactional outbox, and idempotent inbox.
+- `backend/canisters/trade/types.mo`: Canister domain and event types.
+- `backend/dfx.json`: Registers the new canister target automatically.
+- `frontend/services/trade/client.ts`: Typed `@icp-sdk/core` client with offline-first error handling and dynamic canister ID resolution.
+
+**Build and deploy the micro-canister:**
+```bash
+falcon b:build --canister trade --local
+falcon b:deploy --canister trade --local
+falcon c:ping --canister trade --local
+falcon c:status --canister trade --local
+```
+
+---
+
+### 5. Pre-Flight Checks & Deployment
 
 ```bash
 # Complete pre-flight validation (local)

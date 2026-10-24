@@ -31,7 +31,7 @@ start_local_replica() {
     return 0
   fi
   kill_lingering_replica_processes
-  dfx start --clean --background
+  nohup dfx start --clean --background </dev/null >/dev/null 2>&1 || dfx start --clean --background
   wait_for_replica
 }
 

@@ -29,14 +29,8 @@ skill_path_to_index_key() {
 
 echo "==> validate-skills ($SKILLS_ROOT)"
 
-declare -A INDEXED=()
-while IFS= read -r line; do
-  key="${line#skills/}"
-  key="${key%/SKILL.md}"
-  INDEXED["$key"]=1
-done < <(grep -oE 'skills/[a-zA-Z0-9_/]+/SKILL.md' "$INDEX" | sort -u)
-
-declare -A SEEN_NAMES=()
+INDEXED_LIST="$(grep -oE 'skills/[a-zA-Z0-9_/]+/SKILL.md' "$INDEX" | sed 's|^skills/||;s|/SKILL.md$||' | sort -u)"
+SEEN_NAMES=""
 skill_count=0
 
 while IFS= read -r skill_file; do
@@ -77,13 +71,15 @@ while IFS= read -r skill_file; do
     err "$index_key — folder name must end with Standard (camelCase)"
   fi
 
-  if [[ -n "${SEEN_NAMES[$name]+x}" ]]; then
-    err "duplicate skill name '$name' (${SEEN_NAMES[$name]} and $index_key)"
+  if echo "$SEEN_NAMES" | grep -q "^${name}:"; then
+    prev="$(echo "$SEEN_NAMES" | grep "^${name}:" | head -1 | cut -d: -f2)"
+    err "duplicate skill name '$name' ($prev and $index_key)"
   else
-    SEEN_NAMES["$name"]="$index_key"
+    SEEN_NAMES="$SEEN_NAMES
+${name}:${index_key}"
   fi
 
-  if [[ -z "${INDEXED[$index_key]+x}" ]]; then
+  if ! echo "$INDEXED_LIST" | grep -qx "$index_key"; then
     err "$index_key — not indexed in .agents/SKILLS.md"
   fi
 
@@ -128,12 +124,13 @@ while IFS= read -r skill_file; do
 
 done < <(find "$SKILLS_ROOT" -name 'SKILL.md' | sort)
 
-for key in "${!INDEXED[@]}"; do
+while IFS= read -r key; do
+  [[ -n "$key" ]] || continue
   target="$SKILLS_ROOT/$key/SKILL.md"
   if [[ ! -f "$target" ]]; then
     err "SKILLS.md indexes missing skill: $key"
   fi
-done
+done <<< "$INDEXED_LIST"
 
 echo ""
 echo "skills checked: $skill_count"

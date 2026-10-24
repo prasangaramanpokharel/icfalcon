@@ -1,6 +1,6 @@
 {
   "name": "create-icfalcon",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Scaffold an IcFalcon Internet Computer app in one command \u2014 Motoko backend, Next.js frontend, falcon CLI.",
   "license": "MIT",
   "author": "prasangapokharel",
