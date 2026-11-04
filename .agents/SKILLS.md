@@ -144,7 +144,7 @@ Frontend detail skills: [`frontend/.agents/SKILLS.md`](../frontend/.agents/SKILL
 | Local deploy | [`guideStandard/localDeployStandard/SKILL.md`](skills/guideStandard/localDeployStandard/SKILL.md) |
 | Production deploy | [`guideStandard/productionDeployStandard/SKILL.md`](skills/guideStandard/productionDeployStandard/SKILL.md) |
 | ICPay canister controllers | [`icpayControllerStandard/SKILL.md`](skills/icpayControllerStandard/SKILL.md) |
-| Custom domains & SSL | [`icpayDomainStandard/SKILL.md`](skills/icpayDomainStandard/SKILL.md) |
+| Custom domains & SSL | [`domainStandard/SKILL.md`](skills/domainStandard/SKILL.md) |
 | Release | [`guideStandard/releaseStandard/SKILL.md`](skills/guideStandard/releaseStandard/SKILL.md) |
 | Deploy reference | [`motokoStandard/deployGuideStandard/SKILL.md`](skills/motokoStandard/deployGuideStandard/SKILL.md) |
 | Falcon CLI | [`ops/docs/commands.md`](../ops/docs/commands.md) |
@@ -170,7 +170,7 @@ Frontend detail skills: [`frontend/.agents/SKILLS.md`](../frontend/.agents/SKILL
 ├── codingStandard/          errorHandlingStandard/   layeringStandard/
 ├── migrationStandard/       testingStandard/         integrationStandard/
 ├── endpointsStandard/     frontendStandard/        logoStandard/
-├── icpayControllerStandard/ icpayDomainStandard/     icpsdkStandard/          falconUniverseStandard/
+├── icpayControllerStandard/ domainStandard/          icpsdkStandard/          falconUniverseStandard/
 ├── financeStandard/
 │   ├── walletStandard/      transferStandard/        transactionStandard/
 ├── guideStandard/
