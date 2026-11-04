@@ -102,6 +102,27 @@ commands:
     confirm: false
     script: ops/scripts/canister-call.sh
 
+  canister:logs:
+    confirm: false
+    steps:
+      - dfx canister logs {{canister}} {{network}}
+
+  canister:snapshot:create:
+    confirm: false
+    steps:
+      - dfx canister stop {{canister}} {{network}}
+      - dfx canister snapshot create {{canister}} {{network}}
+      - dfx canister start {{canister}} {{network}}
+
+  canister:snapshot:list:
+    confirm: false
+    steps:
+      - dfx canister snapshot list {{canister}} {{network}}
+
+  canister:snapshot:load:
+    confirm: true
+    script: ops/scripts/canister-snapshot-load.sh
+
   # ── cycles ─────────────────────────────────────────
   cycles:balance:
     confirm: false
@@ -182,6 +203,11 @@ aliases:
   c:id: canister:id
   c:info: canister:info
   c:call: canister:call
+  c:logs: canister:logs
+  c:sn:create: canister:snapshot:create
+  c:sn:list: canister:snapshot:list
+  c:sn:load: canister:snapshot:load
+  b:snapshot: canister:snapshot:create
   # cycles
   y:bal: cycles:balance
   y:addr: cycles:address

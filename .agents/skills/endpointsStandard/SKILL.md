@@ -34,6 +34,14 @@ mixin (
 };
 ```
 
+## Endpoint Modifiers
+
+| Modifier | Execution | Canister Calls? | Cycles Cost | Use For |
+|---|---|---|---|---|
+| `public query func` | Single node (no consensus) | No (internal state only) | **Free (0 cycles)** | Fast reads (<50ms) from local canister state |
+| `public shared composite query func` | Single node tree evaluation | **Yes** (calls other canister queries) | **Free (0 cycles)** | Cross-canister dashboard & state aggregation |
+| `public shared ({ caller }) func` | Subnet consensus (update) | **Yes** (inter-canister updates) | Costs cycles (~2-5M cycles) | State mutations, balance transfers, outbox events |
+
 ## Wire in main.mo
 
 ```motoko

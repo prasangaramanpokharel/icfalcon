@@ -178,6 +178,27 @@ falcon c:call createProduct '("Laptop", 1200)' --update --local
 
 ---
 
+### 6. Canister Snapshots, Rollbacks & Logs
+
+Manage on-chain state snapshots and execution logs natively:
+
+```bash
+# Create an on-chain state snapshot (captures Wasm, heap & stable memory)
+falcon c:sn:create --local
+# or for mainnet: falcon c:sn:create
+
+# List on-chain snapshots for a canister
+falcon c:sn:list --local
+
+# Restore / rollback to a previous snapshot
+falcon c:sn:load <snapshot-id> --local
+
+# Fetch system ring-buffer logs
+falcon c:logs --local
+```
+
+---
+
 ## Adding Custom Commands
 
 Define custom tasks in [`falcon.yaml`](../falcon.yaml):

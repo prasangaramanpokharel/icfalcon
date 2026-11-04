@@ -83,6 +83,9 @@ falcon p:check --local      # skills + code audit + backend + frontend build
 | II auth | `.agents/skills/motokoStandard/internetIdentityAuthStandard/SKILL.md` |
 | RBAC / auth | `.agents/skills/motokoStandard/authorizationStandard/SKILL.md` |
 | HTTP outcalls | `.agents/skills/motokoStandard/httpOutcallsStandard/SKILL.md` |
+| Threshold signatures (Solana/Bitcoin/EVM) | `.agents/skills/motokoStandard/thresholdSignaturesStandard/SKILL.md` |
+| EVM RPC (Ethereum/Base/Arbitrum) | `.agents/skills/extensionsStandard/evmRpcStandard/SKILL.md` |
+| vetKeys (on-chain encryption) | `.agents/skills/extensionsStandard/vetKeysStandard/SKILL.md` |
 | Extensions (OpenAI, Stripe, email, …) | [`.agents/SKILLS.md`](.agents/SKILLS.md) → Extensions |
 | Connectors (Slack, Gmail, Calendar) | [`.agents/SKILLS.md`](.agents/SKILLS.md) → Connectors |
 

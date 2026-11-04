@@ -153,6 +153,41 @@ let targets = Universe.subscribersFor(broker, "order.created");
 
 ---
 
+### 4. Read Aggregation: Composite Queries
+
+While state mutations and event notifications flow asynchronously via pub/sub, **read operations across micro-canisters should never use update calls or events**. Use **composite queries** to aggregate read-only data across canisters in a single call tree:
+
+```motoko
+// Cross-canister read aggregation without consensus wait or cycle burn
+public shared composite query func getDashboard(user : Principal) : async DashboardView {
+  let wallet = await walletCanister.getBalance(user);
+  let orders = await orderCanister.getRecentOrders(user);
+  let profile = await profileCanister.getProfile(user);
+  { wallet; orders; profile }
+};
+```
+- **Cost**: **0 cycles** (executed locally on a single boundary/replica node).
+- **Latency**: Sub-200ms round-trip.
+
+---
+
+### 5. Outbox Dispatch: Dynamic Timers vs Heartbeat
+
+To periodically flush pending outbox events, **never use `system func heartbeat()`**. Heartbeats execute on every single consensus round (~1 second), burning cycles continuously even when the outbox is empty.
+
+Instead, use **Motoko System Timers** (`mo:core/Timer`):
+
+```motoko
+import Timer "mo:core/Timer";
+
+// Schedule next flush dynamically only when work is pending
+let timerId = Timer.set(#seconds(5), func() : async () {
+  await dispatchPendingOutbox();
+});
+```
+
+---
+
 ## Hub Package (`pkg/universe`)
 
 Install into your backend canister via Falcon CLI:

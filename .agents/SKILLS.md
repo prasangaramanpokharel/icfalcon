@@ -95,6 +95,7 @@ Frontend detail skills: [`frontend/.agents/SKILLS.md`](../frontend/.agents/SKILL
 | Internet Identity | [`motokoStandard/internetIdentityAuthStandard/SKILL.md`](skills/motokoStandard/internetIdentityAuthStandard/SKILL.md) |
 | RBAC / caller guards | [`motokoStandard/authorizationStandard/SKILL.md`](skills/motokoStandard/authorizationStandard/SKILL.md) |
 | HTTP outcalls | [`motokoStandard/httpOutcallsStandard/SKILL.md`](skills/motokoStandard/httpOutcallsStandard/SKILL.md) |
+| Threshold signatures (ECDSA/Schnorr) | [`motokoStandard/thresholdSignaturesStandard/SKILL.md`](skills/motokoStandard/thresholdSignaturesStandard/SKILL.md) |
 | Cycles / cost | [`motokoStandard/cyclesAndCostStandard/SKILL.md`](skills/motokoStandard/cyclesAndCostStandard/SKILL.md) |
 | Canister tests (detail) | [`motokoStandard/testingMotokoStandard/SKILL.md`](skills/motokoStandard/testingMotokoStandard/SKILL.md) |
 | Inline migration | [`motokoStandard/migratingMotokoStandard/SKILL.md`](skills/motokoStandard/migratingMotokoStandard/SKILL.md) |
@@ -123,6 +124,8 @@ Frontend detail skills: [`frontend/.agents/SKILLS.md`](../frontend/.agents/SKILL
 | Post to X | [`extensionsStandard/postingToXStandard/SKILL.md`](skills/extensionsStandard/postingToXStandard/SKILL.md) |
 | Camera | [`extensionsStandard/cameraStandard/SKILL.md`](skills/extensionsStandard/cameraStandard/SKILL.md) |
 | QR scanner | [`extensionsStandard/qrCodeStandard/SKILL.md`](skills/extensionsStandard/qrCodeStandard/SKILL.md) |
+| EVM RPC (Ethereum/Arbitrum/Base) | [`extensionsStandard/evmRpcStandard/SKILL.md`](skills/extensionsStandard/evmRpcStandard/SKILL.md) |
+| vetKeys (on-chain encryption) | [`extensionsStandard/vetKeysStandard/SKILL.md`](skills/extensionsStandard/vetKeysStandard/SKILL.md) |
 
 ---
 
