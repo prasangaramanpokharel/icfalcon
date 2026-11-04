@@ -60,7 +60,7 @@ commands:
     steps:
       - bash ops/scripts/validate-skills.sh
       - bash ops/scripts/code/motoko/validate-code.sh
-      - dfx build {{canister}} {{network}}
+      - dfx build {{canister}} --check {{network}}
       - npm run build --prefix frontend
 
   skills:validate:

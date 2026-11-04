@@ -85,7 +85,7 @@ ${name}:${index_key}"
 
   lines="$(wc -l < "$skill_file")"
   exempt_long="writingMotokoStandard|integrationStandard|migratingMotokoEnhancedStandard|errorHandlingStandard|codingStandard|frontendStandard"
-  if [[ "$lines" -gt 350 ]] && ! [[ "$index_key" =~ ^motoko/($exempt_long)$|^(codingStandard|errorHandlingStandard|frontendStandard|integrationStandard)$ ]]; then
+  if [[ "$lines" -gt 350 ]] && ! [[ "$index_key" =~ ^motoko(Standard)?/($exempt_long)$|^(codingStandard|errorHandlingStandard|frontendStandard|integrationStandard)$ ]]; then
     warn "$index_key — $lines lines (prefer <300; split or trim)"
   fi
 

@@ -15,7 +15,7 @@ SOURCES=$(mops sources)
 MOC="${MOC:-$(pwd)/.mops/moc-wrapper}"
 "$MOC" -r -Werror $SOURCES --package pkg pkg --package app src testing/TestRunner.mo
 
-echo "==> dfx build app"
-dfx build app
+echo "==> dfx build app (--check)"
+dfx build app --check
 
 echo "==> all tests passed"
