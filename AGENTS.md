@@ -76,6 +76,7 @@ falcon p:check --local      # skills + code audit + backend + frontend build
 | Production deploy | `.agents/skills/guideStandard/productionDeployStandard/SKILL.md` |
 | ICPay controllers | `.agents/skills/icpayControllerStandard/SKILL.md` |
 | Custom domains / SSL | `.agents/skills/domainStandard/SKILL.md` |
+| Cycle costs & pricing | `.agents/skills/cycleCostStandard/SKILL.md` |
 | Release | `.agents/skills/guideStandard/releaseStandard/SKILL.md` |
 | Deploy reference | `.agents/skills/motokoStandard/deployGuideStandard/SKILL.md` |
 | Frontend | `.agents/skills/frontendStandard/SKILL.md` |
@@ -136,6 +137,7 @@ Reference implementation (Phase 3): [docs/phase/3/PLAN.md](docs/phase/3/PLAN.md)
 ├── icpsdkStandard/
 ├── falconUniverseStandard/
 ├── ormStandard/
+├── cycleCostStandard/
 ├── extensionsStandard/
 │   ├── openAiStandard/
 │   ├── objectStorageStandard/

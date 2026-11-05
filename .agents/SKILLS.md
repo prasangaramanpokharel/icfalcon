@@ -59,6 +59,7 @@ Also runs as the first step of `falcon p:check`.
 | Hub packages & modules | [`packageStandard/SKILL.md`](skills/packageStandard/SKILL.md) |
 | Multi-canister event mesh | [`falconUniverseStandard/SKILL.md`](skills/falconUniverseStandard/SKILL.md) |
 | ORM & 3NF database models | [`ormStandard/SKILL.md`](skills/ormStandard/SKILL.md) |
+| Cycle costs & pricing | [`cycleCostStandard/SKILL.md`](skills/cycleCostStandard/SKILL.md) |
 
 ---
 
@@ -175,7 +176,7 @@ Frontend detail skills: [`frontend/.agents/SKILLS.md`](../frontend/.agents/SKILL
 ├── commandStandard/         codingStandard/          errorHandlingStandard/   layeringStandard/
 ├── migrationStandard/       testingStandard/         integrationStandard/
 ├── endpointsStandard/     frontendStandard/        logoStandard/            ormStandard/
-├── icpayControllerStandard/ domainStandard/          icpsdkStandard/          falconUniverseStandard/
+├── icpayControllerStandard/ domainStandard/          icpsdkStandard/          falconUniverseStandard/  cycleCostStandard/
 ├── financeStandard/
 │   ├── walletStandard/      transferStandard/        transactionStandard/
 ├── guideStandard/
