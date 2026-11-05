@@ -57,6 +57,7 @@ falcon p:check --local      # skills + code audit + backend + frontend build
 
 | Task | Skill path |
 |---|---|
+| CLI commands & ops | `.agents/skills/commandStandard/SKILL.md` |
 | New feature | `.agents/skills/integrationStandard/SKILL.md` |
 | Scaffold CLI | `falcon m:f <Name>` |
 | Code audit / linter | `falcon audit code:motoko` / `falcon a:c:m` |
@@ -120,6 +121,7 @@ Reference implementation (Phase 3): [docs/phase/3/PLAN.md](docs/phase/3/PLAN.md)
 
 ```
 .agents/skills/
+├── commandStandard/
 ├── codingStandard/
 ├── errorHandlingStandard/
 ├── integrationStandard/

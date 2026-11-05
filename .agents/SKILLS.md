@@ -48,6 +48,7 @@ Also runs as the first step of `falcon p:check`.
 
 | Task | Skill |
 |---|---|
+| CLI commands & ops | [`commandStandard/SKILL.md`](skills/commandStandard/SKILL.md) |
 | Layer rules | [`layering/SKILL.md`](skills/layeringStandard/SKILL.md) |
 | Code style | [`codingStandard/SKILL.md`](skills/codingStandard/SKILL.md) |
 | Errors / ApiResult | [`errorHandling/SKILL.md`](skills/errorHandlingStandard/SKILL.md) |
@@ -171,7 +172,7 @@ Frontend detail skills: [`frontend/.agents/SKILLS.md`](../frontend/.agents/SKILL
 
 ```
 .agents/skills/
-├── codingStandard/          errorHandlingStandard/   layeringStandard/
+├── commandStandard/         codingStandard/          errorHandlingStandard/   layeringStandard/
 ├── migrationStandard/       testingStandard/         integrationStandard/
 ├── endpointsStandard/     frontendStandard/        logoStandard/            ormStandard/
 ├── icpayControllerStandard/ domainStandard/          icpsdkStandard/          falconUniverseStandard/
