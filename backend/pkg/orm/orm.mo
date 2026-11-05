@@ -1,3 +1,4 @@
+import Map "mo:core/Map";
 import Result "mo:core/Result";
 import Types "./types";
 import Table "./table";
@@ -6,7 +7,22 @@ import Relation "./relation";
 import Migration "./migration";
 
 module {
-  public let createTable = Table.Table;
+  public func createTable<T>(config : Types.TableConfig<T>) : Table.Table<T> {
+    Table.Table<T>(config, null);
+  };
+
+  public func createTableFromState<T>(config : Types.TableConfig<T>, state : Types.TableState<T>) : Table.Table<T> {
+    Table.Table<T>(config, ?state);
+  };
+
+  public func createState<T>() : Types.TableState<T> {
+    {
+      store = Map.empty<Text, T>();
+      uniqueIndices = Map.empty<Text, Map.Map<Text, Text>>();
+      groupIndices = Map.empty<Text, Map.Map<Text, [Text]>>();
+    };
+  };
+
   public let hasMany = Relation.hasMany;
   public let hasOne = Relation.hasOne;
   public let belongsTo = Relation.belongsTo;
@@ -34,7 +50,7 @@ module {
 
   // Restores a table from a stable array during canister postupgrade
   public func fromArray<T>(tableConfig : Types.TableConfig<T>, records : [T]) : Result.Result<Table.Table<T>, Text> {
-    let tbl = Table.Table<T>(tableConfig);
+    let tbl = Table.Table<T>(tableConfig, null);
     switch (tbl.populate(records)) {
       case (#ok(_)) { #ok(tbl) };
       case (#err(msg)) { #err(msg) };
@@ -46,5 +62,6 @@ module {
   public type Page<T> = Types.Page<T>;
   public type IndexDef<T> = Types.IndexDef<T>;
   public type TableConfig<T> = Types.TableConfig<T>;
+  public type TableState<T> = Types.TableState<T>;
   public type RecordId = Types.RecordId;
 };

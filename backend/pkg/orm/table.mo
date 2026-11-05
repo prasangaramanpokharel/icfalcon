@@ -4,8 +4,8 @@ import Index "./index";
 import Query "./query";
 
 module {
-  public class Table<T>(config : Types.TableConfig<T>) {
-    let manager = Index.IndexManager<T>(config);
+  public class Table<T>(config : Types.TableConfig<T>, optState : ?Types.TableState<T>) {
+    let manager = Index.IndexManager<T>(config, optState);
 
     public func insert(record : T) : Result.Result<T, Text> {
       manager.insert(record);
@@ -93,6 +93,10 @@ module {
 
     public func count() : Nat {
       manager.count();
+    };
+
+    public func getState() : Types.TableState<T> {
+      manager.getState();
     };
 
     public func builder() : Query.Query<T> {

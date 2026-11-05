@@ -176,6 +176,7 @@ Read [`ops/docs/`](ops/docs/README.md) for full project and architecture documen
 | [ops/docs/README.md](ops/docs/README.md) | Documentation index & framework overview |
 | [ops/docs/commands.md](ops/docs/commands.md) | Full `falcon` CLI reference & aliases |
 | [ops/docs/architecture.md](ops/docs/architecture.md) | 4-tier Motoko architecture & persistent memory |
+| [ops/docs/motoko.md](ops/docs/motoko.md) | Motoko 1.6.0 language powers, EOP memory model, and FalconORM guide |
 | [ops/docs/universe.md](ops/docs/universe.md) | Falcon Universe multi-canister event mesh ("Kafka for Motoko") |
 | [ops/docs/audit.md](ops/docs/audit.md) | Motoko code validator & linter (`falcon audit code:motoko`) |
 | [ops/docs/packages.md](ops/docs/packages.md) | `icp-hub` packages (`falcon add pkg`), registry list |

@@ -6,19 +6,30 @@ import Text "mo:core/Text";
 import Types "./types";
 
 module {
-  public class IndexManager<T>(config : Types.TableConfig<T>) {
-    let store = Map.empty<Text, T>();
-    let uniqueIndices = Map.empty<Text, Map.Map<Text, Text>>();
-    let groupIndices = Map.empty<Text, Map.Map<Text, [Text]>>();
+  public class IndexManager<T>(config : Types.TableConfig<T>, optState : ?Types.TableState<T>) {
+    let (store, uniqueIndices, groupIndices) = switch (optState) {
+      case (?st) { (st.store, st.uniqueIndices, st.groupIndices) };
+      case (null) {
+        (
+          Map.empty<Text, T>(),
+          Map.empty<Text, Map.Map<Text, Text>>(),
+          Map.empty<Text, Map.Map<Text, [Text]>>(),
+        )
+      };
+    };
 
     // Initialize secondary index containers
     for (idx in config.indices.values()) {
       switch (idx.indexType) {
         case (#unique) {
-          Map.add(uniqueIndices, Text.compare, idx.name, Map.empty<Text, Text>());
+          if (not Map.containsKey(uniqueIndices, Text.compare, idx.name)) {
+            Map.add(uniqueIndices, Text.compare, idx.name, Map.empty<Text, Text>());
+          };
         };
         case (#foreignKey or #index) {
-          Map.add(groupIndices, Text.compare, idx.name, Map.empty<Text, [Text]>());
+          if (not Map.containsKey(groupIndices, Text.compare, idx.name)) {
+            Map.add(groupIndices, Text.compare, idx.name, Map.empty<Text, [Text]>());
+          };
         };
       };
     };
@@ -268,6 +279,14 @@ module {
 
     public func count() : Nat {
       Map.size(store);
+    };
+
+    public func getState() : Types.TableState<T> {
+      {
+        store = store;
+        uniqueIndices = uniqueIndices;
+        groupIndices = groupIndices;
+      };
     };
   };
 };

@@ -8,7 +8,7 @@ module {
     newConfig : Types.TableConfig<NewT>,
     transformer : OldT -> NewT
   ) : Result.Result<Table.Table<NewT>, Text> {
-    let newTable = Table.Table<NewT>(newConfig);
+    let newTable = Table.Table<NewT>(newConfig, null);
 
     for (oldRecord in oldTable.all().values()) {
       let transformed = transformer(oldRecord);

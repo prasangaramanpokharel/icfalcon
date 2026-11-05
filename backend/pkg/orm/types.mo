@@ -1,3 +1,4 @@
+import Map "mo:core/Map";
 import Result "mo:core/Result";
 import Text "mo:core/Text";
 
@@ -22,6 +23,12 @@ module {
     name : Text;
     primaryKey : T -> RecordId;
     indices : [IndexDef<T>];
+  };
+
+  public type TableState<T> = {
+    store : Map.Map<Text, T>;
+    uniqueIndices : Map.Map<Text, Map.Map<Text, Text>>;
+    groupIndices : Map.Map<Text, Map.Map<Text, [Text]>>;
   };
 
   public type Page<T> = {

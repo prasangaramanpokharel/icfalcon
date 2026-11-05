@@ -10,6 +10,7 @@ Welcome to the official developer documentation for **IcFalcon** — an enterpri
 |---|---|
 | [**Commands Reference**](commands.md) | Complete CLI reference for `falcon`, all aliases, shortcuts, and custom tasks |
 | [**Architecture Guide**](architecture.md) | 4-tier Motoko backend (`api → services → repositories → storage`), persistent memory, and error handling |
+| [**Motoko & FalconORM**](motoko.md) | Motoko 1.6.0 compiler powers, runtime capabilities, EOP memory model, and FalconORM 3NF database engine |
 | [**Falcon Universe**](universe.md) | Multi-canister event mesh ("Kafka for Motoko") — Outbox, Inbox deduplication, Broker routing, and Timer heartbeats |
 | [**Code Validator & Linter**](audit.md) | Style, consistency, and architecture layering validator (`falcon audit code:motoko` / `falcon a:c:m`) |
 | [**Package Ecosystem**](packages.md) | `icp-hub` package manager (`falcon add pkg <name>`), 65+ audited Motoko packages, and publishing |

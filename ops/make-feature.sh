@@ -115,7 +115,7 @@ if ! grep -q "${NAME}Api" "$MAIN"; then
       } elsif (/import FeatureStorage "storage\/FeatureStorage";/) {
         $_ .= "import '"${NAME}"'Storage \"storage/'"${NAME}"'Storage\";\n";
       } elsif (/let features = FeatureStorage\.createFeatureMap\(\);/) {
-        $_ .= "  transient let '"${name}"'s = '"${NAME}"'Storage.create'"${NAME}"'Table();\n";
+        $_ .= "  transient let '"${name}"'s = '"${NAME}"'Storage.create'"${NAME}"'Table(null);\n";
       } elsif (/transient let featureService = FeatureService\.create\(features, users\);/) {
         $_ .= "  transient let '"${name}"'Service = '"${NAME}"'Service.create('"${name}"'s, users);\n";
       } elsif (/include FeatureApi\(featureService, mwConfig\);/) {
