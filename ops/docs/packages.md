@@ -32,6 +32,7 @@ When you install a package, `falcon add pkg` automatically resolves dependencies
 ## 2. Featured Packages
 
 ### Core Architecture & State
+- **`orm`**: Full 3NF-compliant relational & document ORM with auto-syncing secondary indices, fluent query builder (`where`, `orderBy`, `paginate`), and 1-line schema migrations.
 - **`universe`**: Event-driven multi-canister mesh ("Kafka for Motoko") with outbox & inbox deduplication.
 - **`crud`**: Generic Map CRUD helpers for `mo:core`.
 - **`storage`**: Generic stable Map store wrappers.

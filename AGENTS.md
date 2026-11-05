@@ -63,6 +63,7 @@ falcon p:check --local      # skills + code audit + backend + frontend build
 | Layer rules | `.agents/skills/layeringStandard/SKILL.md` |
 | Hub packages / modules | `.agents/skills/packageStandard/SKILL.md` |
 | Multi-canister mesh | `.agents/skills/falconUniverseStandard/SKILL.md` |
+| ORM / 3NF models | `.agents/skills/ormStandard/SKILL.md` |
 | Code style | `.agents/skills/codingStandard/SKILL.md` |
 | Errors | `.agents/skills/errorHandlingStandard/SKILL.md` |
 | Migrations | `.agents/skills/migrationStandard/SKILL.md` |
@@ -132,6 +133,7 @@ Reference implementation (Phase 3): [docs/phase/3/PLAN.md](docs/phase/3/PLAN.md)
 ├── domainStandard/
 ├── icpsdkStandard/
 ├── falconUniverseStandard/
+├── ormStandard/
 ├── extensionsStandard/
 │   ├── openAiStandard/
 │   ├── objectStorageStandard/

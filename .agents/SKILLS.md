@@ -57,6 +57,7 @@ Also runs as the first step of `falcon p:check`.
 | API endpoints | [`endpoints/SKILL.md`](skills/endpointsStandard/SKILL.md) |
 | Hub packages & modules | [`packageStandard/SKILL.md`](skills/packageStandard/SKILL.md) |
 | Multi-canister event mesh | [`falconUniverseStandard/SKILL.md`](skills/falconUniverseStandard/SKILL.md) |
+| ORM & 3NF database models | [`ormStandard/SKILL.md`](skills/ormStandard/SKILL.md) |
 
 ---
 
@@ -172,7 +173,7 @@ Frontend detail skills: [`frontend/.agents/SKILLS.md`](../frontend/.agents/SKILL
 .agents/skills/
 ├── codingStandard/          errorHandlingStandard/   layeringStandard/
 ├── migrationStandard/       testingStandard/         integrationStandard/
-├── endpointsStandard/     frontendStandard/        logoStandard/
+├── endpointsStandard/     frontendStandard/        logoStandard/            ormStandard/
 ├── icpayControllerStandard/ domainStandard/          icpsdkStandard/          falconUniverseStandard/
 ├── financeStandard/
 │   ├── walletStandard/      transferStandard/        transactionStandard/

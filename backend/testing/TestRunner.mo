@@ -5,6 +5,7 @@ import MoneyTest "pkg/Money.test";
 import TransactionTest "pkg/Transaction.test";
 import TransferTest "pkg/Transfer.test";
 import UniverseTest "pkg/Universe.test";
+import OrmTest "pkg/Orm.test";
 import WalletTest "services/WalletService.test";
 
 persistent actor TestRunner {
@@ -24,6 +25,7 @@ persistent actor TestRunner {
     runSync("Transaction.test", TransactionTest.run);
     runSync("LedgerTruth.test", LedgerTruthTest.run);
     runSync("Universe.test", UniverseTest.run);
+    runSync("Orm.test", OrmTest.run);
 
     let walletSuite = await WalletTest.Suite();
     switch (await walletSuite.run()) {
