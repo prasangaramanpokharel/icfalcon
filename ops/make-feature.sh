@@ -2,11 +2,22 @@
 set -euo pipefail
 
 ROOT="${FALCON_ROOT:?}"
-NAME_RAW="${1:-}"
+
+USE_ORM=false
+ARGS=()
+for arg in "$@"; do
+  if [[ "$arg" == "--orm" ]]; then
+    USE_ORM=true
+  else
+    ARGS+=("$arg")
+  fi
+done
+
+NAME_RAW="${ARGS[0]:-}"
 
 fail() { echo "error: $1" >&2; exit 1; }
 
-[[ -n "$NAME_RAW" ]] || fail "usage: falcon make:feature <Name>  (e.g. Order, Product)"
+[[ -n "$NAME_RAW" ]] || fail "usage: falcon make:feature <Name> [--orm]  (e.g. Order, Product)"
 
 to_pascal() {
   perl -e '
@@ -46,17 +57,31 @@ render() {
 
 step() { echo "  + $1"; }
 
-step "backend/storage/${NAME}Storage.mo"
-render "$TPL/Storage.mo.tpl" "$BACKEND/storage/${NAME}Storage.mo"
+if [[ "$USE_ORM" == "true" ]]; then
+  step "backend/storage/${NAME}Storage.mo (FalconORM Table)"
+  render "$TPL/StorageOrm.mo.tpl" "$BACKEND/storage/${NAME}Storage.mo"
 
-step "backend/repositories/${NAME}Repository.mo"
-render "$TPL/Repository.mo.tpl" "$BACKEND/repositories/${NAME}Repository.mo"
+  step "backend/repositories/${NAME}Repository.mo (FalconORM Repo)"
+  render "$TPL/RepositoryOrm.mo.tpl" "$BACKEND/repositories/${NAME}Repository.mo"
 
-step "backend/validators/${NAME}Validator.mo"
-render "$TPL/Validator.mo.tpl" "$BACKEND/validators/${NAME}Validator.mo"
+  step "backend/validators/${NAME}Validator.mo"
+  render "$TPL/Validator.mo.tpl" "$BACKEND/validators/${NAME}Validator.mo"
 
-step "backend/services/${NAME}Service.mo"
-render "$TPL/Service.mo.tpl" "$BACKEND/services/${NAME}Service.mo"
+  step "backend/services/${NAME}Service.mo (FalconORM Service)"
+  render "$TPL/ServiceOrm.mo.tpl" "$BACKEND/services/${NAME}Service.mo"
+else
+  step "backend/storage/${NAME}Storage.mo"
+  render "$TPL/Storage.mo.tpl" "$BACKEND/storage/${NAME}Storage.mo"
+
+  step "backend/repositories/${NAME}Repository.mo"
+  render "$TPL/Repository.mo.tpl" "$BACKEND/repositories/${NAME}Repository.mo"
+
+  step "backend/validators/${NAME}Validator.mo"
+  render "$TPL/Validator.mo.tpl" "$BACKEND/validators/${NAME}Validator.mo"
+
+  step "backend/services/${NAME}Service.mo"
+  render "$TPL/Service.mo.tpl" "$BACKEND/services/${NAME}Service.mo"
+fi
 
 step "backend/api/v1/${NAME}.mo"
 render "$TPL/Api.mo.tpl" "$BACKEND/api/v1/${NAME}.mo"
@@ -81,21 +106,39 @@ render "$TPL/panel.tsx.tpl" "$FRONTEND/components/$kebab/${kebab}-panel.tsx"
 MAIN="$BACKEND/main.mo"
 if ! grep -q "${NAME}Api" "$MAIN"; then
   step "main.mo — wire ${NAME} module"
-  perl -i -pe '
-    if (/import FeatureApi "api\/v1\/Feature";/) {
-      $_ .= "import '"${NAME}"'Api \"api/v1/'"${NAME}"'\";\n";
-    } elsif (/import FeatureService "services\/FeatureService";/) {
-      $_ .= "import '"${NAME}"'Service \"services/'"${NAME}"'Service\";\n";
-    } elsif (/import FeatureStorage "storage\/FeatureStorage";/) {
-      $_ .= "import '"${NAME}"'Storage \"storage/'"${NAME}"'Storage\";\n";
-    } elsif (/let features = FeatureStorage\.createFeatureMap\(\);/) {
-      $_ .= "  let '"${name}"'s = '"${NAME}"'Storage.create'"${NAME}"'Map();\n";
-    } elsif (/transient let featureService = FeatureService\.create\(features, users\);/) {
-      $_ .= "  transient let '"${name}"'Service = '"${NAME}"'Service.create('"${name}"'s, users);\n";
-    } elsif (/include FeatureApi\(featureService, mwConfig\);/) {
-      $_ .= "  include '"${NAME}"'Api('"${name}"'Service, mwConfig);\n";
-    }
-  ' "$MAIN"
+  if [[ "$USE_ORM" == "true" ]]; then
+    perl -i -pe '
+      if (/import FeatureApi "api\/v1\/Feature";/) {
+        $_ .= "import '"${NAME}"'Api \"api/v1/'"${NAME}"'\";\n";
+      } elsif (/import FeatureService "services\/FeatureService";/) {
+        $_ .= "import '"${NAME}"'Service \"services/'"${NAME}"'Service\";\n";
+      } elsif (/import FeatureStorage "storage\/FeatureStorage";/) {
+        $_ .= "import '"${NAME}"'Storage \"storage/'"${NAME}"'Storage\";\n";
+      } elsif (/let features = FeatureStorage\.createFeatureMap\(\);/) {
+        $_ .= "  transient let '"${name}"'s = '"${NAME}"'Storage.create'"${NAME}"'Table();\n";
+      } elsif (/transient let featureService = FeatureService\.create\(features, users\);/) {
+        $_ .= "  transient let '"${name}"'Service = '"${NAME}"'Service.create('"${name}"'s, users);\n";
+      } elsif (/include FeatureApi\(featureService, mwConfig\);/) {
+        $_ .= "  include '"${NAME}"'Api('"${name}"'Service, mwConfig);\n";
+      }
+    ' "$MAIN"
+  else
+    perl -i -pe '
+      if (/import FeatureApi "api\/v1\/Feature";/) {
+        $_ .= "import '"${NAME}"'Api \"api/v1/'"${NAME}"'\";\n";
+      } elsif (/import FeatureService "services\/FeatureService";/) {
+        $_ .= "import '"${NAME}"'Service \"services/'"${NAME}"'Service\";\n";
+      } elsif (/import FeatureStorage "storage\/FeatureStorage";/) {
+        $_ .= "import '"${NAME}"'Storage \"storage/'"${NAME}"'Storage\";\n";
+      } elsif (/let features = FeatureStorage\.createFeatureMap\(\);/) {
+        $_ .= "  let '"${name}"'s = '"${NAME}"'Storage.create'"${NAME}"'Map();\n";
+      } elsif (/transient let featureService = FeatureService\.create\(features, users\);/) {
+        $_ .= "  transient let '"${name}"'Service = '"${NAME}"'Service.create('"${name}"'s, users);\n";
+      } elsif (/include FeatureApi\(featureService, mwConfig\);/) {
+        $_ .= "  include '"${NAME}"'Api('"${name}"'Service, mwConfig);\n";
+      }
+    ' "$MAIN"
+  fi
 fi
 
 echo ""

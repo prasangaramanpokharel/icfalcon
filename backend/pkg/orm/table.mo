@@ -11,8 +11,32 @@ module {
       manager.insert(record);
     };
 
+    public func insertMany(records : [T]) : Result.Result<[T], Text> {
+      manager.insertMany(records);
+    };
+
+    public func upsert(record : T) : Result.Result<T, Text> {
+      let id = config.primaryKey(record);
+      switch (manager.get(id)) {
+        case (null) {
+          manager.insert(record);
+        };
+        case (?oldRecord) {
+          manager.update(oldRecord, record);
+        };
+      };
+    };
+
+    public func exists(id : Types.RecordId) : Bool {
+      manager.exists(id);
+    };
+
     public func findById(id : Types.RecordId) : ?T {
       manager.get(id);
+    };
+
+    public func findFirst(predicate : T -> Bool) : ?T {
+      where(predicate).first();
     };
 
     public func findOneByIndex(indexName : Text, value : Text) : ?T {
@@ -42,6 +66,24 @@ module {
             case (#err(msg)) { #err(msg) };
           };
         };
+      };
+    };
+
+    public func deleteMany(ids : [Types.RecordId]) : Result.Result<Nat, Text> {
+      var deletedCount : Nat = 0;
+      for (id in ids.values()) {
+        switch (delete(id)) {
+          case (#ok(_)) { deletedCount += 1 };
+          case (#err(_)) {};
+        };
+      };
+      #ok(deletedCount);
+    };
+
+    public func populate(records : [T]) : Result.Result<Nat, Text> {
+      switch (manager.insertMany(records)) {
+        case (#ok(recs)) { #ok(recs.size()) };
+        case (#err(msg)) { #err(msg) };
       };
     };
 

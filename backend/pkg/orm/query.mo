@@ -13,6 +13,26 @@ module {
       Query<T>(sorted);
     };
 
+    public func skip(count : Nat) : Query<T> {
+      let total = records.size();
+      let start = if (count > total) { total } else { count };
+      let slice = Array.tabulate<T>(
+        total - start,
+        func(i : Nat) { records[start + i] },
+      );
+      Query<T>(slice);
+    };
+
+    public func take(count : Nat) : Query<T> {
+      let total = records.size();
+      let len = if (count > total) { total } else { count };
+      let slice = Array.tabulate<T>(
+        len,
+        func(i : Nat) { records[i] },
+      );
+      Query<T>(slice);
+    };
+
     public func paginate(offset : Nat, limit : Nat) : Types.Page<T> {
       let total = records.size();
       let start = if (offset > total) { total } else { offset };

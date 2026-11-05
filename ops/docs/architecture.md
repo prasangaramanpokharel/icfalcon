@@ -57,11 +57,19 @@ backend/src/
 |---|---|---|
 | `api/v1/` | `services/`, `types`, `middleware` | `storage/`, `repositories/` |
 | `services/` | `repositories/`, `storage/`, `validators/`, `config/`, `types`, `pkg/` | `api/` |
-| `repositories/` | `storage/`, `types`, `mo:core` | `services/`, `api/` |
-| `storage/` | `types`, `mo:core` | `services/`, `api/`, `repositories/` |
+| `repositories/` | `storage/`, `types`, `mo:core`, `mo:pkg/orm` | `services/`, `api/` |
+| `storage/` | `types`, `mo:core`, `mo:pkg/orm` | `services/`, `api/`, `repositories/` |
 | `validators/` | `types`, `config`, pure `mo:core` | `services/`, `storage/`, `repositories/`, `ledger/` |
 
 > **Strict Rule**: `api/` must NEVER bypass `services/` to import `storage/` directly.
+
+### 3NF State Modeling with FalconORM
+
+For complex domain entities requiring unique constraints, foreign keys, and query filtering, IcFalcon provides `FalconORM` (`mo:pkg/orm/orm`):
+- **Third Normal Form (3NF)**: Avoids unbounded nested arrays that trigger 2MB message limits.
+- **Auto-Synchronized Indices**: Updates, inserts, and deletes keep unique and foreign key indices in sync.
+- **Referential Integrity**: Built-in `validateForeignKey`, `deleteCascade`, and `deleteRestrict` helpers.
+- **Fluent Query Builder**: Chained `.where()`, `.orderBy()`, `.skip()`, `.take()`, and `.paginate()` queries.
 
 ---
 

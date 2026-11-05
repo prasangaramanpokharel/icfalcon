@@ -81,6 +81,32 @@ module {
       #ok(record);
     };
 
+    public func insertMany(records : [T]) : Result.Result<[T], Text> {
+      var insertedIds : [Text] = [];
+      for (rec in records.values()) {
+        switch (insert(rec)) {
+          case (#ok(_)) {
+            insertedIds := Array.concat(insertedIds, [config.primaryKey(rec)]);
+          };
+          case (#err(msg)) {
+            // Roll back previously inserted records in this batch
+            for (id in insertedIds.values()) {
+              switch (get(id)) {
+                case (?r) { ignore delete(r) };
+                case (null) {};
+              };
+            };
+            return #err("Batch insert aborted and rolled back: " # msg);
+          };
+        };
+      };
+      #ok(records);
+    };
+
+    public func exists(id : Text) : Bool {
+      Map.containsKey(store, Text.compare, id);
+    };
+
     public func get(id : Text) : ?T {
       Map.get(store, Text.compare, id);
     };

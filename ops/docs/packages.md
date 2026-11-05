@@ -72,6 +72,7 @@ All packages are imported using the `"mo:pkg/<name>/<entry>"` syntax:
 
 ```motoko
 import Universe "mo:pkg/universe/universe";
+import ORM "mo:pkg/orm/orm";
 import Wallet "mo:pkg/wallet/wallet";
 import Transfer "mo:pkg/transfer/transfer";
 import Errors "mo:pkg/errors/result";

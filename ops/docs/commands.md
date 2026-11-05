@@ -93,19 +93,20 @@ Lockfile is tracked in `backend/icp.pkg`.
 
 ---
 
-### 3. Scaffold Full Feature (`falcon m:f <Name>`)
+### 3. Scaffold Full Feature (`falcon m:f <Name> [--orm]`)
 
 Scaffolds a complete Laravel-style full-stack feature in seconds:
 
 ```bash
-falcon m:f Order
+falcon m:f Order        # Standard Map storage
+falcon m:f Order --orm  # FalconORM 3NF table with auto-indexing & query builder
 ```
 
 **Automatically creates and wires:**
 - Backend:
   - `backend/src/types.mo` (record types and `ApiResult`)
-  - `backend/src/storage/OrderStorage.mo`
-  - `backend/src/repositories/OrderRepository.mo`
+  - `backend/src/storage/OrderStorage.mo` (Map or FalconORM Table)
+  - `backend/src/repositories/OrderRepository.mo` (CRUD or ORM query repository)
   - `backend/src/validators/OrderValidator.mo`
   - `backend/src/services/OrderService.mo`
   - `backend/src/api/v1/Order.mo`

@@ -21,14 +21,15 @@ Eliminate manual `Map.Map` synchronization, prevent denormalization memory explo
 
 - Defining domain models with unique constraints (e.g. `email`, `username`)
 - Maintaining One-to-Many or Many-to-One relationships (e.g. `Tenant` -> `User` -> `Order`)
-- Querying records with filtering, sorting, and pagination (`where`, `orderBy`, `paginate`)
+- Querying records with filtering, sorting, and pagination (`where`, `orderBy`, `skip`, `take`, `paginate`)
+- Enforcing referential integrity and foreign key delete cascade/restrict rules
 - Safely evolving data models across canister upgrades with 1-line schema migrations
 
 ---
 
-## 1. Table & Index Definition
+## 1. Declarative Table & Index Definition
 
-Always normalize entities into atomic tables (3NF). Use foreign keys instead of embedding unbounded nested arrays:
+Always normalize entities into atomic tables (3NF). Use declarative schema helpers instead of verbose record configs:
 
 ```motoko
 import ORM "mo:pkg/orm/orm";
@@ -44,97 +45,107 @@ public type User = {
 };
 
 // 2. Table with Primary Key & Secondary Indices
-public let UserTable = ORM.createTable<User>({
-  name = "users";
-  primaryKey = func(u : User) : Text { u.id };
-  indices = [
-    {
-      name = "email";
-      indexType = #unique; // Enforces unique email constraint
-      extractKey = func(u : User) : Text { u.email };
-    },
-    {
-      name = "tenantId";
-      indexType = #foreignKey; // 1-to-Many group index
-      extractKey = func(u : User) : Text { u.tenantId };
-    },
-    {
-      name = "role";
-      indexType = #index; // Non-unique filter index
-      extractKey = func(u : User) : Text { u.role };
-    },
-  ];
-});
+public let UserTable = ORM.createTable<User>(ORM.config("users", func(u : User) { u.id }, [
+  ORM.unique("email", func(u : User) { u.email }),       // Enforces unique constraint
+  ORM.foreignKey("tenantId", func(u : User) { u.tenantId }), // 1-to-Many group index
+  ORM.index("role", func(u : User) { u.role }),           // Filter index
+]));
 ```
 
 ---
 
-## 2. CRUD Operations
+## 2. CRUD, Batch & Upsert Operations
 
 ```motoko
 // Insert: Validates unique constraints & auto-indexes all keys
 let result = UserTable.insert(newUser); // Result<User, Text>
 
-// Primary Key lookup: O(1)
-let user = UserTable.findById("u-123"); // ?User
+// Atomic Batch Insert with automatic rollback on collision
+let batch = UserTable.insertMany([u1, u2, u3]); // Result<[User], Text>
 
-// Unique Index lookup: O(1)
+// Upsert: Creates if absent, updates if exists
+let upserted = UserTable.upsert(user); // Result<User, Text>
+
+// Primary Key existence check: O(1)
+let exists = UserTable.exists("u-123"); // Bool
+
+// Lookups
+let byId = UserTable.findById("u-123"); // ?User
 let byEmail = UserTable.findOneByIndex("email", "alice@example.com"); // ?User
-
-// Foreign Key / Group lookup: O(1)
-let tenantUsers = UserTable.findManyByIndex("tenantId", "tenant-1"); // [User]
+let byRole = UserTable.findManyByIndex("role", "admin"); // [User]
 
 // Update: Diffs modified fields and re-indexes dirty indices atomically
 UserTable.update("u-123", func(u : User) : User {
   { u with role = "admin" }
 });
 
-// Delete: Removes primary key and purges all secondary indices
+// Delete & Batch Delete
 UserTable.delete("u-123");
+UserTable.deleteMany(["u-1", "u-2"]); // Result<Nat, Text>
 ```
 
 ---
 
-## 3. 3NF Relational Queries
-
-Resolve parent-child relationships through normalized foreign keys:
+## 3. 3NF Relational Integrity & Cascade Rules
 
 ```motoko
-// Resolves 1-to-Many (e.g. User hasMany Orders)
-let userOrders = ORM.hasMany<User, Order>(
-  user,
-  func(u : User) { u.id },
-  OrderTable,
-  "userId"
-);
+// 1. Referential Integrity: Verify referenced parent exists before insert
+let isValid = ORM.validateForeignKey<Order, User>(newOrder, func(o) { o.userId }, UserTable);
 
-// Resolves Many-to-1 (e.g. Order belongsTo User)
-let orderOwner = ORM.belongsTo<Order, User>(
-  order,
-  func(o : Order) { o.userId },
-  UserTable
-);
+// 2. Resolves 1-to-Many (e.g. User hasMany Orders)
+let userOrders = ORM.hasMany<User, Order>(user, func(u) { u.id }, OrderTable, "userId");
+
+// 3. Resolves Many-to-1 (e.g. Order belongsTo User)
+let owner = ORM.belongsTo<Order, User>(order, func(o) { o.userId }, UserTable);
+
+// 4. Restrict Delete: Prevent parent deletion if child records exist
+ORM.deleteRestrict<User, Order>(UserTable, "u-123", OrderTable, "userId");
+
+// 5. Cascade Delete: Delete child records first, then delete parent
+ORM.deleteCascade<User, Order>(UserTable, "u-123", OrderTable, "userId", func(o) { o.id });
 ```
 
 ---
 
-## 4. Query Builder (Filter, Sort, Paginate)
+## 4. Query Builder (Filter, Sort, Skip/Take, Paginate)
 
 ```motoko
-let page = UserTable.builder()
+let admins = UserTable.builder()
   .where(func(u : User) : Bool { u.role == "admin" })
   .orderBy(func(a : User, b : User) : Bool { a.createdAt > b.createdAt }) // Newest first
-  .paginate(0, 20); // offset = 0, limit = 20
+  .skip(10)
+  .take(5)
+  .toArray();
 
-// Returns:
-// { items = [User]; total = 42; offset = 0; limit = 20; hasMore = true }
+let page = UserTable.builder()
+  .where(func(u : User) : Bool { u.role == "admin" })
+  .paginate(0, 20); // { items = [User]; total = 42; offset = 0; limit = 20; hasMore = true }
 ```
 
 ---
 
-## 5. Schema Migration (1-Line Upgrades)
+## 5. Canister Upgrades & 1-Line Migrations
 
-When upgrading canister state with new attributes:
+### Fast Canister Upgrade Persistence
+
+In `preupgrade`:
+```motoko
+system func preupgrade() {
+  stableUsers := UserTable.all();
+};
+```
+
+In `postupgrade`:
+```motoko
+system func postupgrade() {
+  UserTable := switch (ORM.fromArray(userConfig, stableUsers)) {
+    case (#ok(tbl)) { tbl };
+    case (#err(msg)) { D.trap("Failed to restore UserTable: " # msg) };
+  };
+};
+```
+
+### Schema Evolution (OldType -> NewType)
 
 ```motoko
 public func migration(oldTable : ORM.Table<OldUser>) : Result<ORM.Table<NewUser>, Text> {
