@@ -1,11 +1,22 @@
 #!/usr/bin/env bash
-# cycles-fund.sh — Friendly cycles funding helper with terminal QR code
+# cycles-fund.sh — Cycles funding helper with terminal QR code and auto-deploy
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SUGGESTED_ICP="${1:-0.50}"
+ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-# Get identity, principal, and account-id using dfx or icp
+SUGGESTED_ICP="0.50"
+DEPLOY_ARGS=()
+
+# Parse arguments: extract suggested ICP if numeric, otherwise collect for deploy
+for arg in "$@"; do
+  if [[ "$arg" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+    SUGGESTED_ICP="$arg"
+  else
+    DEPLOY_ARGS+=("$arg")
+  fi
+done
+
 WHOAMI=""
 PRINCIPAL=""
 ACCOUNT_ID=""
@@ -30,47 +41,54 @@ WHOAMI="${WHOAMI:-default}"
 PRINCIPAL="${PRINCIPAL:-unknown}"
 ACCOUNT_ID="${ACCOUNT_ID:-unknown}"
 
-# 1 XDR = 1 Trillion cycles. Assuming ~1 ICP ≈ 10-12 XDR (~10T cycles) or conservative 10T per ICP.
-# 0.50 ICP ~ 5.0 Trillion cycles
 CYCLES_EST="$(awk -v icp="$SUGGESTED_ICP" 'BEGIN { printf "%.2f", icp * 10.0 }' 2>/dev/null || echo "5.00")"
 
 echo ""
 echo "=================================================================="
-echo " ⛽ CYCLES FUNDING REQUIRED FOR DEPLOYMENT / RUNTIME"
+echo "CYCLES FUNDING REQUIRED"
 echo "=================================================================="
 echo ""
-echo "Your identity needs ICP to mint cycles for creating or powering canisters."
+echo "Identity:        $WHOAMI"
+echo "Required:        ~$CYCLES_EST T Cycles"
+echo "Suggested:       $SUGGESTED_ICP ICP"
 echo ""
-echo "  Identity:        $WHOAMI"
-echo "  Suggested ICP:   $SUGGESTED_ICP ICP"
-echo "  Estimated Yield: ~$CYCLES_EST Trillion Cycles"
-echo ""
-echo "------------------------------------------------------------------"
-echo " 1. Send $SUGGESTED_ICP ICP to your Account ID (Recommended):"
-echo "------------------------------------------------------------------"
+echo "Account ID (Recommended):"
 echo "  $ACCOUNT_ID"
 echo ""
-echo " 2. Or send to your Principal ID:"
-echo "------------------------------------------------------------------"
+echo "Principal ID:"
 echo "  $PRINCIPAL"
 echo ""
-echo "------------------------------------------------------------------"
-echo " 3. Scan QR Code from your Mobile Wallet (Plug / Bitfinity / Oisy / NNS):"
-echo "------------------------------------------------------------------"
+echo "Scan QR Code:"
 
 if [[ "$ACCOUNT_ID" != "unknown" && -x "$SCRIPT_DIR/render-qr.sh" ]]; then
   "$SCRIPT_DIR/render-qr.sh" "$ACCOUNT_ID"
-else
-  echo "[QR Code unavailable: missing account-id or render-qr.sh]"
 fi
 
-echo ""
-echo "------------------------------------------------------------------"
-echo " Next Steps after sending ICP:"
-echo "------------------------------------------------------------------"
-echo " 1. Check ICP balance:     falcon t:bal"
-echo " 2. Mint into cycles:      falcon y:mint $SUGGESTED_ICP"
-echo " 3. Topup your canister:   falcon y:topup app ${CYCLES_EST}T"
-echo " 4. Resume deploy:         falcon b:deploy"
 echo "=================================================================="
 echo ""
+
+# Interactive prompt: confirms transfer and deploys automatically
+CONFIRM_SENT=""
+if [[ -t 0 ]]; then
+  read -r -p "I have sent [y/N]: " CONFIRM_SENT
+else
+  # Read from stdin when piped
+  read -r CONFIRM_SENT || CONFIRM_SENT=""
+fi
+
+CONFIRM_SENT="$(echo "$CONFIRM_SENT" | tr '[:upper:]' '[:lower:]' | xargs)"
+
+if [[ "$CONFIRM_SENT" == "y" || "$CONFIRM_SENT" == "yes" || "$CONFIRM_SENT" == "i have sent" || "$CONFIRM_SENT" == "i have sended" ]]; then
+  echo ""
+  echo "Proceeding to deploy..."
+  echo ""
+  FALCON_BIN="$ROOT/ops/falcon"
+  if [[ -x "$FALCON_BIN" ]]; then
+    exec "$FALCON_BIN" b:deploy "${DEPLOY_ARGS[@]}"
+  else
+    exec dfx deploy "${DEPLOY_ARGS[@]}"
+  fi
+else
+  echo "Deployment paused."
+  exit 0
+fi

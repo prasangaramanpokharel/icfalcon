@@ -68,52 +68,35 @@ falcon y:fund [amount_in_icp]
 ```
 *(Default suggested amount is 0.50 ICP, which mints ~5 Trillion cycles).*
 
-### The Friendly User Prompt Format
+### The Minimal & Formal Funding Flow
+
+When `falcon y:fund` runs, it outputs clean text and a high-contrast UTF-8 QR code without emojis:
 
 ```
 ==================================================================
- ⛽ CYCLES FUNDING REQUIRED FOR DEPLOYMENT / RUNTIME
+CYCLES FUNDING REQUIRED
 ==================================================================
 
-Your identity needs ICP to mint cycles for creating or powering canisters.
+Identity:        <identity_name>
+Required:        ~5.00 T Cycles
+Suggested:       0.50 ICP
 
-  Identity:        <identity_name>
-  Suggested ICP:   0.50 ICP
-  Estimated Yield: ~5.00 Trillion Cycles
-
-------------------------------------------------------------------
- 1. Send 0.50 ICP to your Account ID (Recommended):
-------------------------------------------------------------------
+Account ID (Recommended):
   <64_character_hex_account_id>
 
- 2. Or send to your Principal ID:
-------------------------------------------------------------------
+Principal ID:
   <principal_id>
 
- 3. Scan QR Code from your Mobile Wallet (Plug / Bitfinity / Oisy / NNS):
+Scan QR Code:
   [High-contrast UTF-8 QR code rendered in terminal]
 ==================================================================
+
+I have sent [y/N]: 
 ```
 
----
-
-## Post-Deposit Mint & Top-up Workflow
-
-Once the user transfers ICP:
-
-```bash
-# 1. Verify ICP balance arrived
-falcon t:bal
-
-# 2. Convert ICP into cycles
-falcon y:mint 0.50
-
-# 3. Top up the target canister
-falcon y:topup app 5.00T
-
-# 4. Resume deployment
-falcon b:deploy
-```
+### Auto-Deploy on User Confirmation
+- If the user responds with `y`, `yes`, or presses enter after confirming: the CLI automatically initiates the build and deployment pipeline (`falcon b:deploy`).
+- If `n` or cancelled: the process pauses cleanly without leaving dangling tasks.
 
 ---
 
