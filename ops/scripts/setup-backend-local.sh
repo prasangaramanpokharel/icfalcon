@@ -9,23 +9,20 @@ export ROOT BACKEND FRONTEND FALCON_ROOT="$ROOT" FALCON_BACKEND_DIR="$BACKEND" F
 source "$ROOT/ops/scripts/lib/replica.sh"
 
 deploy_local_canister() {
-  cd "$BACKEND"
-  dfx canister create app --network local 2>/dev/null || true
-  dfx build app --network local
-  dfx deploy app --mode=upgrade --wasm-memory-persistence keep --network local 2>/dev/null || dfx deploy app --network local
+  "$ROOT/ops/scripts/canister-deploy.sh"
 }
 
 write_frontend_env() {
-  local id
-  id="$(cd "$BACKEND" && dfx canister id app --network local)"
+  local id host
+  id="$(replica_canister_id)"
+  host="$(replica_api_url)"
   cat > "$FRONTEND/.env.local" <<EOF
 NEXT_PUBLIC_CANISTER_ID=$id
-NEXT_PUBLIC_IC_HOST=http://127.0.0.1:4943
-NEXT_PUBLIC_II_URL=http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943
+NEXT_PUBLIC_IC_HOST=$host
+NEXT_PUBLIC_II_URL=https://identity.ic0.app
 EOF
 }
 
 verify_local_ping() {
-  cd "$BACKEND"
-  dfx canister call app ping --query --network local | grep -q .
+  "$ROOT/ops/scripts/canister-manage.sh" ping
 }
