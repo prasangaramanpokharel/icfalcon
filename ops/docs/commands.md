@@ -37,10 +37,42 @@ Everything runs via the global CLI: `falcon <command> [--local] [args]`
 | | `falcon canister:ping` | `falcon c:ping` | Run health ping query |
 | | `falcon canister:id` | `falcon c:id` | Show canister ID |
 | | `falcon canister:call <method>` | `falcon c:call` | Call canister Candid method |
+| **Identity** | `falcon identity:whoami` | `falcon whoami` / `id:whoami` | Show current active identity |
+| | `falcon identity:principal` | `falcon id:p` / `id:principal` | Show principal ID of current identity |
+| | `falcon identity:address` | `falcon id:addr` / `id:address` | Show ledger account ID |
+| | `falcon identity:list` | `falcon id:ls` / `id:list` | List all identities |
+| | `falcon identity:use <name>` | `falcon id:use <name>` | Switch active identity |
+| | `falcon identity:new <name>` | `falcon id:new <name>` | Create a new identity |
+| | `falcon identity:export` | `falcon id:export` | Export identity PEM file |
+| | `falcon identity:import` | `falcon id:import` | Import identity PEM file |
+| **Token (ICP/ICRC)** | `falcon token:balance [token]` | `falcon t:bal` / `t:balance` | Check ledger token balance (default: icp) |
+| | `falcon token:transfer <dest> <amt>` | `falcon t:send` / `t:transfer` | Transfer tokens to destination |
+| | `falcon token:approve <spender> <amt>` | `falcon t:approve` | ICRC-2 token approval |
+| | `falcon token:allowance <spender>` | `falcon t:allowance` | ICRC-2 allowance check |
 | **Cycles** | `falcon cycles:balance` | `falcon y:bal` | Check canister cycles balance |
+| | `falcon cycles:mint <amount>` | `falcon y:mint` | Convert ICP tokens to cycles |
+| | `falcon cycles:transfer <dest>` | `falcon y:send` / `y:transfer` | Transfer cycles to canister or principal |
+| | `falcon cycles:topup [amount]` | `falcon y:topup` / `c:topup` | Top up canister with cycles |
 | | `falcon cycles:address` | `falcon y:addr` | Display cycles ledger account ID |
+| **Canister** | `falcon canister:status` | `falcon c:status` | Query canister operational status and memory |
+| | `falcon canister:ping` | `falcon c:ping` | Run health ping query |
+| | `falcon canister:id` | `falcon c:id` | Show canister ID |
+| | `falcon canister:create` | `falcon c:create` | Create canister on network |
+| | `falcon canister:start` | `falcon c:start` | Start canister |
+| | `falcon canister:stop` | `falcon c:stop` | Stop canister |
+| | `falcon canister:delete` | `falcon c:delete` / `c:del` | Delete canister |
+| | `falcon canister:metadata` | `falcon c:metadata` / `c:meta` | Read Wasm metadata section |
+| | `falcon canister:settings` | `falcon c:settings` | Manage canister controllers and settings |
+| | `falcon canister:sync` | `falcon c:sync` | Sync canister bindings and assets |
+| | `falcon canister:call <method>` | `falcon c:call` | Call canister Candid method |
+| **Network & Project** | `falcon network:list` | `falcon net:ls` / `net:list` | List networks |
+| | `falcon network:ping` | `falcon net:ping` / `r:ping` | Ping local network |
+| | `falcon network:status` | `falcon net:status` / `r:status` | Get network status |
+| | `falcon project:show` | `falcon prj:show` / `p:show` | Show project configuration (`icp.yaml`) |
+| | `falcon env:list` | `falcon env:ls` / `env:list` | List environments |
 | **Users** | `falcon users:count` | `falcon u:count` | Status query of registered users and counters |
 | **Frontend** | `falcon frontend:dev` | `falcon f:dev` | Launch Next.js local development server |
+| **Completions** | `falcon completions [shell]` | `falcon completions` | Generate shell completions (bash/zsh) |
 | | `falcon frontend:build` | `falcon f:build` | Static export build for asset canister hosting |
 | | `falcon frontend:production` | `falcon f:production` / `f:prod` | Serve static production build (`npx serve@latest out`) |
 

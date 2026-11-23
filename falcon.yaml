@@ -122,16 +122,142 @@ commands:
     confirm: true
     script: ops/scripts/canister-snapshot-load.sh
 
+  canister:create:
+    confirm: false
+    script: ops/scripts/canister-manage.sh create
+
+  canister:start:
+    confirm: false
+    script: ops/scripts/canister-manage.sh start
+
+  canister:stop:
+    confirm: false
+    script: ops/scripts/canister-manage.sh stop
+
+  canister:delete:
+    confirm: true
+    script: ops/scripts/canister-manage.sh delete
+
+  canister:install:
+    confirm: true
+    script: ops/scripts/canister-manage.sh install
+
+  canister:uninstall:
+    confirm: true
+    script: ops/scripts/canister-manage.sh uninstall
+
+  canister:metadata:
+    confirm: false
+    script: ops/scripts/canister-manage.sh metadata
+
+  canister:settings:
+    confirm: false
+    script: ops/scripts/canister-manage.sh settings
+
+  canister:sync:
+    confirm: false
+    script: ops/scripts/canister-manage.sh sync
+
+  # ── identity ─────────────────────────────────────────
+  identity:whoami:
+    confirm: false
+    script: ops/scripts/identity-op.sh whoami
+
+  identity:principal:
+    confirm: false
+    script: ops/scripts/identity-op.sh principal
+
+  identity:address:
+    confirm: false
+    script: ops/scripts/identity-op.sh address
+
+  identity:list:
+    confirm: false
+    script: ops/scripts/identity-op.sh list
+
+  identity:use:
+    confirm: false
+    script: ops/scripts/identity-op.sh use
+
+  identity:new:
+    confirm: false
+    script: ops/scripts/identity-op.sh new
+
+  identity:export:
+    confirm: false
+    script: ops/scripts/identity-op.sh export
+
+  identity:import:
+    confirm: false
+    script: ops/scripts/identity-op.sh import
+
+  identity:delete:
+    confirm: false
+    script: ops/scripts/identity-op.sh delete
+
+  # ── token ────────────────────────────────────────────
+  token:balance:
+    confirm: false
+    script: ops/scripts/token-op.sh balance
+
+  token:transfer:
+    confirm: true
+    script: ops/scripts/token-op.sh transfer
+
+  token:approve:
+    confirm: true
+    script: ops/scripts/token-op.sh approve
+
+  token:allowance:
+    confirm: false
+    script: ops/scripts/token-op.sh allowance
+
   # ── cycles ─────────────────────────────────────────
   cycles:balance:
     confirm: false
-    steps:
-      - dfx canister status {{canister}} {{network}}
+    script: ops/scripts/cycles-op.sh balance
+
+  cycles:mint:
+    confirm: true
+    script: ops/scripts/cycles-op.sh mint
+
+  cycles:transfer:
+    confirm: true
+    script: ops/scripts/cycles-op.sh transfer
+
+  cycles:topup:
+    confirm: true
+    script: ops/scripts/cycles-op.sh topup
 
   cycles:address:
     confirm: false
-    steps:
-      - dfx ledger account-id
+    script: ops/scripts/identity-op.sh address
+
+  # ── network ──────────────────────────────────────────
+  network:list:
+    confirm: false
+    script: ops/scripts/network-op.sh list
+
+  network:ping:
+    confirm: false
+    script: ops/scripts/network-op.sh ping
+
+  network:status:
+    confirm: false
+    script: ops/scripts/network-op.sh status
+
+  # ── project & environment ────────────────────────────
+  project:show:
+    confirm: false
+    script: ops/scripts/project-op.sh show
+
+  env:list:
+    confirm: false
+    script: ops/scripts/project-op.sh env
+
+  completions:
+    confirm: false
+    script: ops/scripts/project-op.sh completions
 
   # ── users ──────────────────────────────────────────
   users:count:
@@ -203,13 +329,63 @@ aliases:
   c:info: canister:info
   c:call: canister:call
   c:logs: canister:logs
+  c:create: canister:create
+  c:start: canister:start
+  c:stop: canister:stop
+  c:delete: canister:delete
+  c:del: canister:delete
+  c:install: canister:install
+  c:uninstall: canister:uninstall
+  c:metadata: canister:metadata
+  c:meta: canister:metadata
+  c:settings: canister:settings
+  c:sync: canister:sync
+  c:topup: cycles:topup
   c:sn:create: canister:snapshot:create
   c:sn:list: canister:snapshot:list
   c:sn:load: canister:snapshot:load
   b:snapshot: canister:snapshot:create
+  # identity
+  whoami: identity:whoami
+  id:whoami: identity:whoami
+  id:principal: identity:principal
+  id:p: identity:principal
+  id:addr: identity:address
+  id:address: identity:address
+  id:list: identity:list
+  id:ls: identity:list
+  id:use: identity:use
+  id:new: identity:new
+  id:export: identity:export
+  id:import: identity:import
+  id:delete: identity:delete
+  id:rm: identity:delete
+  # token
+  t:bal: token:balance
+  t:balance: token:balance
+  t:send: token:transfer
+  t:transfer: token:transfer
+  t:approve: token:approve
+  t:allowance: token:allowance
   # cycles
   y:bal: cycles:balance
   y:addr: cycles:address
+  y:mint: cycles:mint
+  y:transfer: cycles:transfer
+  y:send: cycles:transfer
+  y:topup: cycles:topup
+  # network
+  net:list: network:list
+  net:ls: network:list
+  net:ping: network:ping
+  net:status: network:status
+  r:ping: network:ping
+  r:status: network:status
+  # project & env
+  prj:show: project:show
+  p:show: project:show
+  env:ls: env:list
+  env:list: env:list
   # users
   u:count: users:count
   # frontend
