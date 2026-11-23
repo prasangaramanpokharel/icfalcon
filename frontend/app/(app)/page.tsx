@@ -30,7 +30,7 @@ export default function HomePage() {
           />
           <span className="font-semibold tracking-tight">IcFalcon</span>
           <Badge variant="outline" className="text-[11px] font-mono">
-            v0.3.3
+            v0.3.4
           </Badge>
         </div>
 

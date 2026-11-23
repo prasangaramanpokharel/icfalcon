@@ -2,6 +2,20 @@
 
 All notable changes to IcFalcon are documented here.
 
+## [0.3.4] - 2026-11-23
+
+### Added
+- **Production `@icp-sdk/auth` Standard (ICPay Pattern)**: Fully integrated the battle-tested ICPay authentication architecture into `.agent/skills/icpsdkStandard/` and `frontend/services/auth/auth.ts`.
+- **Multi-Provider & Federated Web3 Login**: Support for Internet Identity, Passkeys (FaceID, TouchID, YubiKey), and OpenID providers (`Google`, `Apple`, `Microsoft`) via `OpenIdProvider`.
+- **Dual-Transport Architecture**: Desktop Popup (`window`) and Mobile Redirect (`redirect`) transports with automatic state resumption via `resumeRedirectSignIn()`.
+- **Self-Healing Session Binding**: Probes backend canister on load (`openBackendSession`), auto-purging invalid, expired, or wrong-network delegations (`discardRejectedSession`).
+- **Dedicated `/login` Auth Route**: Implemented `frontend/app/(auth)/login/page.tsx` featuring IcFalcon branding, Passkeys, federated OpenID grid, and mobile redirect fallback.
+- **Enhanced Framework Updater**: Upgraded `falcon update` (`falcon up`) with automatic GitHub bundle extraction for standalone and private user projects, protecting `backend/src/` and user state.
+
+### Fixed
+- **`identityProvider` Object Signature**: Standardized `{ authorizeUrl, canisterId }` object signature across `frontend/services/auth/auth.ts`, `ops/docs/frontend.md`, and `versionStandard`, eliminating runtime `TypeError`.
+- **Audio Feedback**: Added zero-asset Web Audio API login chime in `frontend/lib/ui/successChime.ts`.
+
 ## [0.3.3] - 2026-11-23
 
 ### Added
