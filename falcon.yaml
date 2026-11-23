@@ -67,13 +67,11 @@ commands:
   # ── canister ───────────────────────────────────────
   canister:status:
     confirm: false
-    steps:
-      - dfx canister status {{canister}} {{network}}
+    script: ops/scripts/canister-manage.sh status
 
   canister:ping:
     confirm: false
-    steps:
-      - dfx canister call {{canister}} ping --query {{network}}
+    script: ops/scripts/canister-manage.sh ping
 
   canister:list:
     confirm: false
@@ -82,8 +80,7 @@ commands:
 
   canister:id:
     confirm: false
-    steps:
-      - dfx canister id {{canister}} {{network}}
+    script: ops/scripts/canister-manage.sh id
 
   canister:info:
     confirm: false

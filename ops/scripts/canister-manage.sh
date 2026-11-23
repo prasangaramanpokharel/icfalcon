@@ -43,6 +43,17 @@ if command -v icp >/dev/null 2>&1 && [[ -f "$ROOT/icp.yaml" ]]; then
     status)
       icp canister status "$CANISTER" -e "$ENV" "$@"
       ;;
+    id)
+      icp canister status "$CANISTER" -e "$ENV" "$@" 2>/dev/null | awk '/Canister Id:/ {print $3}'
+      ;;
+    ping)
+      if icp canister status "$CANISTER" -e "$ENV" "$@" 2>/dev/null | grep -q "Status: Running"; then
+        echo "healthy"
+      else
+        echo "unhealthy"
+        exit 1
+      fi
+      ;;
     logs)
       icp canister logs "$CANISTER" -e "$ENV" "$@"
       ;;
