@@ -30,28 +30,21 @@ commands:
 
   backend:deploy:
     confirm: true
-    steps:
-      - dfx canister create {{canister}} {{network}}
-      - dfx build {{canister}} {{network}}
-      - dfx deploy {{canister}} --mode=upgrade --wasm-memory-persistence keep {{network}} 2>/dev/null || dfx deploy {{canister}} {{network}}
+    script: ops/scripts/canister-deploy.sh
 
   backend:hash:
     confirm: false
-    steps:
-      - dfx canister info {{canister}} {{network}}
+    script: ops/scripts/canister-manage.sh info
 
   backend:logs:
     confirm: false
-    steps:
-      - dfx canister logs {{canister}} {{network}}
+    script: ops/scripts/canister-manage.sh logs
 
   # ── production ship ────────────────────────────────
   prod:ship:
     confirm: true
     steps:
-      - dfx canister create {{canister}} {{network}}
-      - dfx build {{canister}} {{network}}
-      - dfx deploy {{canister}} --mode=upgrade --wasm-memory-persistence keep {{network}} 2>/dev/null || dfx deploy {{canister}} {{network}}
+      - ops/scripts/canister-deploy.sh
       - npm run build --prefix frontend
 
   prod:check:
@@ -59,7 +52,7 @@ commands:
     steps:
       - bash ops/scripts/validate-skills.sh
       - bash ops/scripts/code/motoko/validate-code.sh
-      - dfx build {{canister}} --check {{network}}
+      - ops/scripts/backend-build.sh
       - npm run build --prefix frontend
 
   skills:validate:
