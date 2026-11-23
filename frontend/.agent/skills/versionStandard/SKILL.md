@@ -62,12 +62,12 @@ In `@icp-sdk/auth` v11+, the `identityProvider` option of `AuthClient.create()` 
 
 ```typescript
 // ❌ Deprecated (Auth v8/v9 syntax — throws TypeError at runtime)
-const authClient = await AuthClient.create({
+const authClient = new AuthClient({
   identityProvider: "https://identity.ic0.app",
 })
 
 // ✅ Correct (Auth v11+ syntax)
-const authClient = await AuthClient.create({
+const authClient = new AuthClient({
   identityProvider: {
     authorizeUrl: process.env.NEXT_PUBLIC_II_URL ?? "https://identity.ic0.app",
     canisterId: process.env.NEXT_PUBLIC_II_CANISTER_ID ?? "rdmx6-jaaaa-aaaaa-aaadq-cai",

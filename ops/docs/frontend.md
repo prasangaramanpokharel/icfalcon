@@ -37,34 +37,32 @@ npm install @icp-sdk/core @icp-sdk/auth @icp-sdk/signer
 ### Internet Identity Authentication
 
 ```typescript
-// frontend/src/hooks/useAuth.ts
-import { AuthClient } from "@icp-sdk/auth";
+// frontend/services/auth/auth.ts
+import { AuthClient } from "@icp-sdk/auth/client";
 
 export async function loginWithInternetIdentity() {
-  const authClient = await AuthClient.create();
-  
-  await new Promise<void>((resolve, reject) => {
-    authClient.login({
-      identityProvider: process.env.NEXT_PUBLIC_II_URL || "https://identity.ic0.app",
-      onSuccess: () => resolve(),
-      onError: (err) => reject(err),
-    });
+  const authClient = new AuthClient({
+    identityProvider: {
+      authorizeUrl: process.env.NEXT_PUBLIC_II_URL || "https://identity.ic0.app",
+      canisterId: process.env.NEXT_PUBLIC_II_CANISTER_ID || "rdmx6-jaaaa-aaaaa-aaadq-cai",
+    },
   });
 
-  return authClient.getIdentity();
+  return await authClient.signIn();
 }
 ```
 
 ### Initializing Canister Actors
 
 ```typescript
-// frontend/src/services/actor.ts
-import { Actor, HttpAgent } from "@icp-sdk/core";
-import { idlFactory } from "../lib/declarations/app.did.js";
+// frontend/services/client.ts
+import { Actor, HttpAgent } from "@icp-sdk/core/agent";
+import type { Identity } from "@icp-sdk/core/agent";
+import { idlFactory } from "./idl";
 
-export function createCanisterActor(identity?: any) {
+export async function createCanisterActor(identity?: Identity) {
   const host = process.env.NEXT_PUBLIC_IC_HOST || "https://icp-api.io";
-  const agent = new HttpAgent({ host, identity });
+  const agent = await HttpAgent.create({ host, identity });
 
   return Actor.createActor(idlFactory, {
     agent,
