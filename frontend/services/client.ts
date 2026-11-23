@@ -71,6 +71,21 @@ export type AppActor = {
   adminTreasury: () => Promise<{ ok?: { registeredWallets: bigint; symbol: string }; err?: { message: string } }>
 }
 
+const actorCache = new Map<string, AppActor>()
+
+export function clearActorCache(): void {
+  actorCache.clear()
+}
+
+export async function getAppActor(identity?: Identity): Promise<AppActor> {
+  const key = identity ? identity.getPrincipal().toText() : "anonymous"
+  const cached = actorCache.get(key)
+  if (cached) return cached
+  const actor = await createActor(identity)
+  actorCache.set(key, actor)
+  return actor
+}
+
 export async function createActor(identity?: Identity): Promise<AppActor> {
   const agent = await HttpAgent.create({ host, identity })
   if (host.includes("127.0.0.1") || host.includes("localhost")) {

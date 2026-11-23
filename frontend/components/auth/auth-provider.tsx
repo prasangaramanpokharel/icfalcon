@@ -1,82 +1,156 @@
 "use client"
 
-import { AuthClient } from "@icp-sdk/auth/client"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  type ReactNode,
+} from "react"
 import type { Identity } from "@icp-sdk/core/agent"
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
-import { iiUrl } from "@/services/icp"
+import {
+  login as iiLogin,
+  logout as iiLogout,
+  createAuthClient,
+  openBackendSession,
+  discardRejectedSession,
+  resumeRedirectSignIn,
+  type LoginOptions,
+} from "@/services/auth/auth"
+import { playLoginChime } from "@/lib/ui/successChime"
 
-type AuthState = {
+export type AuthContextType = {
   identity: Identity | undefined
   principal: string
+  isAuthenticated: boolean
+  isLoading: boolean
   ready: boolean
-  login: () => Promise<void>
+  login: (options?: LoginOptions | unknown) => Promise<void>
+  acceptIdentity: (identity: Identity) => Promise<void>
   logout: () => Promise<void>
 }
 
-const AuthContext = createContext<AuthState | null>(null)
+const SOUND_KEY = "icpay:login-sound:"
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [client, setClient] = useState<AuthClient | null>(null)
-  const [identity, setIdentity] = useState<Identity | undefined>(undefined)
-  const [ready, setReady] = useState(false)
-
-  useEffect(() => {
-    const authClient = new AuthClient({
-      identityProvider: {
-        authorizeUrl: iiUrl,
-        canisterId: process.env.NEXT_PUBLIC_II_CANISTER_ID ?? "rdmx6-jaaaa-aaaaa-aaadq-cai",
-      },
-    })
-    setClient(authClient)
-    if (authClient.isAuthenticated()) {
-      authClient
-        .getIdentity()
-        .then((id) => {
-          setIdentity(id)
-          setReady(true)
-        })
-        .catch(() => {
-          setIdentity(undefined)
-          setReady(true)
-        })
-    } else {
-      setIdentity(undefined)
-      setReady(true)
-    }
-  }, [])
-
-  const login = useCallback(async () => {
-    if (!client) return
-    try {
-      const id = await client.signIn()
-      setIdentity(id)
-    } catch {
-      // login cancelled or failed
-    }
-  }, [client])
-
-  const logout = useCallback(async () => {
-    if (!client) return
-    await client.signOut()
-    setIdentity(undefined)
-  }, [client])
-
-  const value = useMemo<AuthState>(
-    () => ({
-      identity,
-      principal: identity && !identity.getPrincipal().isAnonymous() ? identity.getPrincipal().toText() : "",
-      ready,
-      login,
-      logout,
-    }),
-    [identity, ready, login, logout],
-  )
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+function playLoginChimeOnce(principal: string) {
+  if (typeof window === "undefined") return
+  const key = SOUND_KEY + principal
+  if (localStorage.getItem(key)) return
+  localStorage.setItem(key, "1")
+  playLoginChime()
 }
 
-export function useAuth() {
+const AuthContext = createContext<AuthContextType>({
+  identity: undefined,
+  principal: "",
+  isAuthenticated: false,
+  isLoading: true,
+  ready: false,
+  login: async () => {},
+  acceptIdentity: async () => {},
+  logout: async () => {},
+})
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [identity, setIdentity] = useState<Identity | undefined>(undefined)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function init() {
+      try {
+        // 1. Check if returning from a mobile redirect sign-in flow
+        const redirectedIdentity = await resumeRedirectSignIn()
+        if (redirectedIdentity) {
+          try {
+            await openBackendSession(redirectedIdentity)
+            setIdentity(redirectedIdentity)
+            playLoginChimeOnce(redirectedIdentity.getPrincipal().toText())
+            return
+          } catch {
+            await discardRejectedSession()
+          }
+        }
+
+        // 2. Standard session check
+        const authClient = await createAuthClient()
+        if (!authClient.isAuthenticated()) return
+        const id = await authClient.getIdentity()
+
+        try {
+          await openBackendSession(id)
+          setIdentity(id)
+        } catch {
+          await discardRejectedSession()
+        }
+      } catch (e) {
+        console.error("Auth init error:", e)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    init()
+  }, [])
+
+  const acceptIdentity = useCallback(async (id: Identity) => {
+    try {
+      await openBackendSession(id)
+    } catch (e) {
+      console.error("Backend login error:", e)
+    }
+    playLoginChimeOnce(id.getPrincipal().toText())
+    setIdentity(id)
+  }, [])
+
+  const login = useCallback(
+    async (options?: LoginOptions | unknown) => {
+      const opts =
+        options &&
+        typeof options === "object" &&
+        ("openIdProvider" in options || "transport" in options)
+          ? (options as LoginOptions)
+          : undefined
+      const id = await iiLogin(opts)
+      if (!id) return
+      await acceptIdentity(id)
+    },
+    [acceptIdentity],
+  )
+
+  const logout = useCallback(async () => {
+    await iiLogout()
+    setIdentity(undefined)
+  }, [])
+
+  const principal = useMemo(() => {
+    return identity && !identity.getPrincipal().isAnonymous()
+      ? identity.getPrincipal().toText()
+      : ""
+  }, [identity])
+
+  return (
+    <AuthContext.Provider
+      value={{
+        identity,
+        principal,
+        isAuthenticated: !!identity && !identity.getPrincipal().isAnonymous(),
+        isLoading,
+        ready: !isLoading,
+        login,
+        acceptIdentity,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+export const useAuth = () => {
   const context = useContext(AuthContext)
-  if (!context) throw new Error("useAuth must be used inside AuthProvider")
+  if (!context) {
+    throw new Error("useAuth must be used inside AuthProvider")
+  }
   return context
 }
