@@ -1,0 +1,7 @@
+name: app
+build:
+  steps:
+    - type: script
+      commands:
+        - $(mops toolchain bin moc 2>/dev/null || which moc) $(mops sources) --package pkg pkg src/main.mo -o "$ICP_WASM_OUTPUT_PATH"
+        - ic-wasm "$ICP_WASM_OUTPUT_PATH" -o "$ICP_WASM_OUTPUT_PATH" metadata "template:type" -d "motoko" --keep-name-section

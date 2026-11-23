@@ -1,0 +1,41 @@
+{
+  "skill": "internetComputer",
+  "version": "2026.x",
+  "evals": [
+    {
+      "id": "eval-icp-canister-security",
+      "prompt": "Write a secure Rust canister update method for transferring tokens that guards against anonymous callers and reentrancy attacks.",
+      "asserts": [
+        "Checks caller != Principal::anonymous()",
+        "Updates internal balances before initiating external inter-canister calls",
+        "Returns a Candid-compatible Result type"
+      ]
+    },
+    {
+      "id": "eval-icp-stable-structures",
+      "prompt": "Explain how to persist scalable state in an ICP Rust canister without serializing everything during pre_upgrade.",
+      "asserts": [
+        "References ic-stable-structures crate",
+        "Mentions VirtualMemory and StableBTreeMap",
+        "Explains that stable structures eliminate pre_upgrade trap risks"
+      ]
+    },
+    {
+      "id": "eval-icp-motoko-actor",
+      "prompt": "Scaffold an actor class in Motoko that implements orthogonal persistence using stable variables and mo:core.",
+      "asserts": [
+        "Uses 'actor class' syntax",
+        "Imports from 'mo:core'",
+        "Declares state with 'private stable var'"
+      ]
+    },
+    {
+      "id": "eval-icp-rust-export-service",
+      "prompt": "Show how to export Candid interface in a Rust canister using candid macros.",
+      "asserts": [
+        "Uses candid::export_service!",
+        "Defines __get_candid_interface_tmp_hack or generates .did via candid-extractor"
+      ]
+    }
+  ]
+}

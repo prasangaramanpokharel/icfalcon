@@ -89,6 +89,7 @@ Hub packages: `subaccount`, `ledger`, `icrc1`, `icrc2`, `wallet`, `transfer`, `t
 | Logo / favicon | [`logoStandard/SKILL.md`](skills/logoStandard/SKILL.md) |
 
 Frontend detail skills: [`frontend/.agent/SKILLS.md`](../frontend/.agent/SKILLS.md).
+Backend detail skills: [`backend/.agent/SKILLS.md`](../backend/.agent/SKILLS.md) · Master ICP Guide: [`backend/.agent/skills/internetComputer/SKILL.md`](../backend/.agent/skills/internetComputer/SKILL.md).
 
 ---
 

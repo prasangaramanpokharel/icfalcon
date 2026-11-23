@@ -1,0 +1,422 @@
+---
+title: "Application canisters"
+description: "Reference for the frontend hosting canisters, SNS canisters, LLM canister, and other application-layer canisters with their interfaces and canister IDs"
+sidebar:
+  order: 4
+---
+
+Application canisters are well-known canisters at the application layer of the Internet Computer that developers commonly integrate into their projects. Unlike [system canisters](system-canisters.md) (which govern the network) or [protocol canisters](protocol-canisters.md) (which provide platform infrastructure), application canisters implement higher-level functionality: hosting web frontends, governing apps via DAO, and running AI inference.
+
+## Certified-assets canister
+
+The [certified-assets canister](https://github.com/dfinity/certified-assets) hosts static web assets (HTML, CSS, JavaScript, images, and other files) directly on the network. The `@dfinity/static-site` recipe deploys it, and it is the recommended way to host a frontend on ICP. Every response it serves is certified, and it accepts only version 2 of the certification protocol, so it has no uncertified serving path. Whether a *visitor* gets a verified response is a separate question, decided by the gateway their URL points at: see [Certified vs uncertified access](../guides/frontends/certification.md#certified-vs-uncertified-access).
+
+These canisters are deployed per-project. There is no global canister ID: each project creates its own.
+
+### Recipe (icp.yaml)
+
+```yaml
+canisters:
+  - name: frontend
+    recipe:
+      type: "@dfinity/static-site@v0.4.0"
+      configuration:
+        dir: dist
+        build:
+          - npm install
+          - npm run build
+```
+
+The recipe pins a matched canister and sync-plugin pair, so the recipe version is the canister version: there is no separate `configuration.version` field. See [Hosting a static site](../guides/frontends/static-site/overview.md) for the remaining configuration fields.
+
+### Interface
+
+| Method | Description |
+|---|---|
+| `version()` | The release identity shared by the canister and its sync plugin |
+| `http_request(req)` | Serve an HTTP request with a certified response |
+| `get_asset_details(start_after)` | A page of asset details, ordered by key |
+| `get_redirect_rules(start_index)` | A page of redirect rules, in match order |
+
+**Sync.** Assets are only ever mutated through a sync, and at most one sync runs at a time. `start_sync` returns a session id that every later call must carry.
+
+| Method | Description |
+|---|---|
+| `start_sync()` | Begin a sync, or report `Busy` |
+| `upload_chunks(arg)` | Stage content chunks under the sync |
+| `execute_operations(arg)` | Apply a group of operations; the call flagged `is_final` finalizes the sync and returns the new state hash |
+| `preparation_canary()` | The compression fingerprint of the client that last prepared the assets |
+
+**Authorization.** Controllers are always authorized without being listed, and are the only callers that can change the set.
+
+| Method | Description |
+|---|---|
+| `authorize(principal)` | Allow a principal to sync assets |
+| `deauthorize(principal)` | Revoke that permission |
+| `list_authorized()` | The extra principals authorized to sync |
+| `can_sync()` | Whether the caller may sync |
+
+**Verification and environment:**
+
+| Method | Description |
+|---|---|
+| `state_hash()` | The canonical 32-byte hash over the served-content model, recomputed at the end of every sync. An update call, so the reply is consensus-backed |
+| `refresh_env()` | Re-capture `PUBLIC_*` variables and the root key, and re-certify the `ic_env` cookie |
+
+**Access protection** (controller-only, for private and preview sites):
+
+| Method | Description |
+|---|---|
+| `enable_protection(login_page)` | Turn the gate on, naming the login page asset |
+| `disable_protection()` | Turn the gate off and drop all tokens |
+| `issue_token(arg)` | Mint an access token, returned once |
+| `revoke_token(label)` | Revoke the tokens with that label |
+| `list_tokens()` | Live tokens with their expiry |
+| `check_protection_status()` | Whether protection is off, healthy, or degraded |
+
+### Configuration
+
+Two files at the root of `dir` configure the canister, and are read as configuration rather than served: `_redirects` for SPA fallback, redirects, rewrites, and error pages, and `_headers` for caching, security headers, and media types. No headers are applied by default. See [Redirects and rewrites](../guides/frontends/static-site/redirects.md) and [Custom headers](../guides/frontends/static-site/headers.md).
+
+### Programmatic uploads
+
+There is no per-asset write endpoint and no JS equivalent of `AssetManager`. Uploads go through the recipe's sync plugin on `icp deploy`, because finalizing a sync recomputes the whole-site `state_hash` that makes a build provable. Apps with user-generated content should store it in a separate canister.
+
+---
+
+## Asset canister (legacy)
+
+The asset canister is the older SDK canister for hosting static web assets, deployed by the `@dfinity/asset-canister` recipe and configured with `.ic-assets.json5`. It remains supported for existing projects; new projects should use the certified-assets canister above, with one exception: proposal-gated asset updates for an SNS-governed frontend exist only here, through `propose_commit_batch` and the `Prepare`/`Commit` permission split. Responses are certified by the subnet, allowing HTTP gateways to verify integrity before serving content to browsers.
+
+Asset canisters are deployed per-project. There is no global asset canister ID: each project creates its own.
+
+### Recipe (icp.yaml)
+
+```yaml
+canisters:
+  - name: frontend
+    recipe:
+      type: "@dfinity/asset-canister@v2.3.0"
+      configuration:
+        dir: dist
+        build:
+          - npm install
+          - npm run build
+```
+
+- `recipe.type`: identifies this as an asset canister deployment
+- `dir`: the build output directory whose contents are uploaded
+- `build`: commands run automatically by `icp deploy` before uploading
+
+### Interface
+
+The asset canister exposes the following Candid methods:
+
+**Permission management:**
+
+| Method | Description |
+|---|---|
+| `grant_permission(arg)` | Grant a principal a permission role (Prepare, Commit, or ManagePermissions) |
+| `revoke_permission(arg)` | Revoke a permission role from a principal |
+| `list_permitted(arg)` | Query principals with a given permission role |
+| `take_ownership()` | Caller becomes the sole authorized principal |
+
+**Asset operations:**
+
+| Method | Description |
+|---|---|
+| `store(arg)` | Upload a single asset in one call |
+| `create_batch()` | Begin a chunked upload batch |
+| `create_chunk(arg)` | Upload a chunk of a large asset |
+| `commit_batch(arg)` | Finalize a batch and make assets live |
+| `create_asset(arg)` | Create an asset entry without uploading content |
+| `set_asset_content(arg)` | Set or replace the content of an asset |
+| `unset_asset_content(arg)` | Remove content encoding from an asset |
+| `delete_asset(arg)` | Delete an asset |
+| `clear()` | Remove all assets from the canister |
+
+**Asset queries:**
+
+| Method | Description |
+|---|---|
+| `retrieve(key)` | Fetch raw asset bytes by key |
+| `get(arg)` | Fetch an asset with encoding and metadata |
+| `get_chunk(arg)` | Fetch a specific chunk of a large asset |
+| `list()` | List all uploaded assets with metadata |
+| `get_asset_properties(key)` | Query per-asset headers and aliasing settings |
+| `set_asset_properties(arg)` | Set per-asset headers and aliasing |
+| `certified_tree()` | Return the certificate tree for response verification |
+
+**HTTP serving:**
+
+| Method | Description |
+|---|---|
+| `http_request(req)` | Serve an HTTP request with certified response |
+| `http_request_streaming_callback(token)` | Stream large responses in chunks |
+
+### Configuration via `.ic-assets.json5`
+
+Create `.ic-assets.json5` in your `dir` directory (or `public/`/`static/` so your build copies it):
+
+```json5
+[
+  {
+    "match": "**/*",
+    "security_policy": "standard",
+    "headers": {
+      "Cache-Control": "public, max-age=0, must-revalidate"
+    },
+    "allow_raw_access": false
+  },
+  {
+    "match": "assets/**/*",
+    "headers": {
+      "Cache-Control": "public, max-age=31536000, immutable"
+    }
+  },
+  {
+    "match": "**/*",
+    "enable_aliasing": true
+  }
+]
+```
+
+- `security_policy: "standard"`: applies the default Content Security Policy and security headers
+- `allow_raw_access: false`: disables serving assets on the uncertified `raw.icp.net` domain
+- `enable_aliasing: true`: enables SPA fallback, serving `index.html` for unmatched paths
+
+### Programmatic uploads
+
+Specific to this canister, and not a recommended pattern: see [Asset canister (legacy)](../guides/frontends/asset-canister.md#programmatic-uploads-with-icp-sdkcanisters). `@icp-sdk/canisters` (>= 3.5.0) uploads assets from code:
+
+```javascript
+import { AssetManager } from "@icp-sdk/canisters/assets";
+import { HttpAgent } from "@icp-sdk/core/agent";
+
+const agent = await HttpAgent.create({
+  host: "https://ic0.app",
+  shouldFetchRootKey: false,  // never fetch root key against mainnet
+});
+
+const assetManager = new AssetManager({
+  canisterId: "your-asset-canister-id",
+  agent,
+});
+
+// Upload a file (files >1.9MB are chunked automatically)
+// fileBuffer: Uint8Array | ArrayBuffer | number[]: e.g. from fs.readFileSync, fetch, or the File API
+await assetManager.store(fileBuffer, {
+  fileName: "photo.jpg",
+  contentType: "image/jpeg",
+  path: "/uploads",
+});
+
+// List all assets
+const assets = await assetManager.list();
+
+// Delete an asset
+await assetManager.delete("/uploads/old-photo.jpg");
+```
+
+### Wasm versioning
+
+The asset canister Wasm version determines which features are available. Key versions:
+
+- `0.30.2`+: required for the `ic_env` cookie (used by `safeGetCanisterEnv()` from `@icp-sdk/core`)
+- Omitting `configuration.version` in the recipe uses the latest version automatically
+
+Downgrading the Wasm version may fail if the stable memory format changed between versions. If a downgrade is necessary, use `icp deploy --mode reinstall` (wipes all stored assets).
+
+For version history, upgrade guidance, and deployment pitfalls, see [Asset canister (legacy)](../guides/frontends/asset-canister.md).
+
+---
+
+## SNS canisters
+
+When an SNS (Service Nervous System) is launched for an app, the SNS-W canister deploys a set of governance canisters on an SNS subnet. These canisters are created per-app: there is no single global SNS. To find the canister IDs for a specific SNS, look up the app on the [ICP Dashboard](https://dashboard.internetcomputer.org/).
+
+### Canister set per SNS
+
+| Canister | Purpose |
+|---|---|
+| **Governance** | Proposal submission, voting, neuron management |
+| **Ledger** | SNS token transfers (ICRC-1 standard) |
+| **Root** | Sole controller of all app canisters post-launch |
+| **Swap** | Runs the decentralization swap (ICP for SNS tokens) |
+| **Index** | Transaction indexing for the SNS ledger |
+| **Archive** | Historical transaction storage |
+
+### SNS governance interface
+
+The governance canister is the primary interface for SNS operations:
+
+| Method | Description |
+|---|---|
+| `manage_neuron` | Create, configure, or vote with a neuron |
+| `get_neuron` | Query a neuron's state and voting power |
+| `list_neurons` | List neurons for a principal |
+| `get_proposal` | Query a proposal |
+| `list_proposals` | List proposals with filtering |
+| `get_nervous_system_parameters` | Query the current governance parameters |
+| `get_metadata` | Query the SNS name, description, and logo |
+
+### SNS ledger
+
+The SNS ledger implements ICRC-1, ICRC-2, and ICRC-3. The key methods are the same as any ICRC-1 ledger:
+
+| Method | Description |
+|---|---|
+| `icrc1_transfer` | Transfer SNS tokens |
+| `icrc1_balance_of` | Query an account balance |
+| `icrc1_total_supply` | Query the total token supply |
+| `icrc2_approve` | Approve a spender |
+| `icrc2_transfer_from` | Transfer on behalf of an approver |
+| `icrc3_get_blocks` | Query transaction history (ICRC-3 transaction log) |
+
+For ICRC interface details, see [Digital Asset Standards](digital-asset-standards.md).
+
+### Querying SNS canister IDs at runtime
+
+After an SNS is launched, call the `list_sns_canisters` method on the Root canister to retrieve the IDs of all canisters in the set:
+
+```bash
+icp canister call <sns_root_id> list_sns_canisters '()' -e ic
+# Returns: record { root: principal; swap: principal; ledger: principal; index: principal; governance: principal; dapps: vec principal; archives: vec principal }
+```
+
+For SNS launch configuration and governance setup, see [Launching an SNS](../guides/governance/launching.md).
+
+---
+
+## LLM canister
+
+The LLM canister provides AI inference running on the network, using large language models, enabling canisters to generate text, run chat completions, and build AI agents without external API keys.
+
+| Field | Value |
+|---|---|
+| Canister ID | [`w36hm-eqaaa-aaaal-qr76a-cai`](https://dashboard.internetcomputer.org/canister/w36hm-eqaaa-aaaal-qr76a-cai) |
+| Candid interface | [llm-canister-ollama.did](https://github.com/dfinity/llm/releases/latest/download/llm-canister-ollama.did) |
+
+### Supported models
+
+| Model | Identifier |
+|---|---|
+| Llama 3.1 8B | `Llama3_1_8B` |
+
+### Rust: `ic-llm` library
+
+Add the `ic-llm` crate to your project:
+
+```toml
+[dependencies]
+ic-cdk = "0.17"
+ic-llm = "1.1.0"
+```
+
+**Single-turn prompt:**
+
+```rust
+use ic_cdk::update;
+use ic_llm::{ChatMessage, Model};
+
+#[update]
+async fn prompt(prompt_str: String) -> String {
+    ic_llm::prompt(Model::Llama3_1_8B, prompt_str).await
+}
+```
+
+**Multi-turn chat:**
+
+```rust
+use ic_cdk::update;
+use ic_llm::{ChatMessage, Model};
+
+#[update]
+async fn chat(messages: Vec<ChatMessage>) -> String {
+    let response = ic_llm::chat(Model::Llama3_1_8B)
+        .with_messages(messages)
+        .send()
+        .await;
+
+    response.message.content.unwrap_or_default()
+}
+```
+
+### Motoko: `llm` library (mops)
+
+Add the `llm` package to your `mops.toml`:
+
+```toml
+[dependencies]
+llm = "2.1.0"
+```
+
+**Single-turn prompt:**
+
+```motoko
+import LLM "mo:llm";
+
+persistent actor {
+  public func prompt(prompt : Text) : async Text {
+    await LLM.prompt(#Llama3_1_8B, prompt);
+  };
+};
+```
+
+**Multi-turn chat:**
+
+```motoko
+import LLM "mo:llm";
+
+persistent actor {
+  public func chat(messages : [LLM.ChatMessage]) : async Text {
+    let response = await LLM.chat(#Llama3_1_8B).withMessages(messages).send();
+
+    switch (response.message.content) {
+      case (?text) text;
+      case null "";
+    };
+  };
+};
+```
+
+### Local development
+
+The LLM canister requires an Ollama server for local testing:
+
+```bash
+# Start the Ollama server
+ollama serve
+
+# Pull the model (one-time download, ~4 GiB)
+ollama pull llama3.1:8b
+```
+
+icp-cli does not yet have an equivalent of dfx's `"type": "custom"` / `"remote"` canister configuration for pointing a local replica at the Ollama-backed LLM Wasm. To test the LLM canister locally, use the example project from [dfinity/examples](https://github.com/dfinity/examples/tree/master/rust/llm_chatbot) which includes the `dfx.json` configuration needed for this setup.
+
+For a complete guide, see [AI inference](../guides/backends/ai-inference.md).
+
+---
+
+## Quick reference
+
+| Canister | Canister ID | Purpose |
+|---|---|---|
+| Certified-assets | Per-project | Static web asset hosting, every response certified |
+| Asset canister (legacy) | Per-project | Static web asset hosting with HTTP certification |
+| SNS governance | Per-app | DAO governance for a specific app |
+| SNS ledger | Per-app | ICRC-1/ICRC-2/ICRC-3 token ledger for a specific SNS |
+| SNS root | Per-app | Controller of all app canisters in the SNS set |
+| SNS swap | Per-app | Decentralization swap (ICP for SNS tokens) |
+| LLM | `w36hm-eqaaa-aaaal-qr76a-cai` | Onchain AI inference (Llama 3.1 8B) |
+
+## Next steps
+
+- [Hosting a static site](../guides/frontends/static-site/overview.md): deploying and configuring a frontend canister for your project
+- [Asset canister (legacy)](../guides/frontends/asset-canister.md): the older recipe, and how to migrate off it
+- [Launching an SNS](../guides/governance/launching.md): how to decentralize an app with SNS
+- [AI inference](../guides/backends/ai-inference.md): building AI-powered canisters with the LLM canister
+- [System canisters](system-canisters.md): NNS, Internet Identity, ICP ledger, and other network-level canisters
+- [Protocol canisters](protocol-canisters.md): Bitcoin, ckBTC, EVM RPC, and other protocol-layer canisters
+
+<!-- Upstream: informed by dfinity/icskills — skills/static-site/SKILL.md, skills/sns-launch/SKILL.md; dfinity/certified-assets — certified-assets.did; dfinity/portal — docs/references/asset-canister.mdx; dfinity/examples — rust/llm_chatbot, motoko/llm_chatbot -->

@@ -1,0 +1,325 @@
+---
+title: "Cycle costs"
+description: "Exact cycle costs for compute, storage, messaging, threshold signing, HTTPS outcalls, and chain integration APIs"
+sidebar:
+  order: 8
+---
+
+Canisters pay for the resources they consume and operations they perform using [**cycles**](../concepts/cycles.md). The price of cycles is pegged to [XDR](glossary.md#xdr) (Special Drawing Rights): **1 trillion cycles = 1 XDR**. USD values throughout this page use **1 XDR = $1.366430**; see [XDR exchange rate](#xdr-exchange-rate) at the end of this page for the current rate and how to look it up programmatically.
+
+You can use the [pricing calculator](https://3d5wy-5aaaa-aaaag-qkhsq-cai.icp.net/) to estimate the cost for your app.
+
+## Cycle units
+
+| Abbreviation | Name     | In numbers        | XDR value | Approx. USD value |
+|--------------|----------|-------------------|-----------|-------------------|
+| T            | Trillion | 1_000_000_000_000 | 1         | ~$1.37            |
+| B            | Billion  | 1_000_000_000     | 0.001     | ~$0.00137         |
+| M            | Million  | 1_000_000         | 0.000001  | ~$0.00000137      |
+| k            | Thousand | 1_000             | 10⁻⁹      | ~$0.00000000137   |
+
+## Replication factors
+
+Costs scale with the number of nodes in the [subnet](../concepts/network-overview.md#subnets). The base cost tables below assume a **13-node application subnet**. For a 34-node (fiduciary) subnet, costs scale as `34 * (cost / 13)`:
+
+- **13-node subnet**: Standard application subnets. No scaling needed: costs are as listed.
+- **34-node subnet**: Fiduciary subnets (higher security for financial applications). Costs are approximately **2.6×** the 13-node cost.
+- **SEV-enabled subnet**: Subnets whose nodes run in a [Trusted Execution Environment](../concepts/node-infrastructure.md#trusted-execution-environments) scale by `n / 7` instead of `n / 13`. A 13-node SEV-enabled subnet costs approximately **1.86×** the listed values.
+
+[HTTPS outcall](#https-outcalls) formulas use the node count `n` directly, so they do not depend on whether SEV is enabled.
+
+See [Subnet types](subnet-types.md) for subnet-specific details.
+
+## Cost table
+
+USD values use the rate stated in the intro. Use cycle counts for precise budgeting.
+
+<!-- Needs human verification: cloud pricing comparison requested in content brief — no upstream source found in .sources/ for ICP vs. cloud provider cost comparison. -->
+
+| Operation | Description | Who pays | 13-node cycles | ~USD | 34-node cycles | ~USD |
+|-----------|-------------|----------|----------------|------|----------------|------|
+| Query call | Query information from a canister | N/A | Free | Free | Free | Free |
+| Canister creation | Create a new canister | Created canister | 500_000_000_000 | ~$0.683 | 1_307_692_307_692 | ~$1.787 |
+| Compute allocation (per % per second) | Reserved compute per second | Canister with allocation | 10_000_000 | ~$0.0000137 | 26_153_846 | ~$0.0000357 |
+| Update message execution | Per update message executed (base fee) | Target canister | 5_000_000 | ~$0.0000068 | 13_076_923 | ~$0.0000179 |
+| 1B Wasm32 instructions executed | Per 1B instructions of a Wasm32 canister (on top of base fee) | Executing canister | 1_000_000_000 | ~$0.00137 | 2_615_384_615 | ~$0.00357 |
+| 1B Wasm64 instructions executed | Per 1B instructions of a Wasm64 canister (on top of base fee) | Executing canister | 2_000_000_000 | ~$0.00273 | 5_230_769_230 | ~$0.00715 |
+| Xnet call (request + response) | Inter-canister call overhead | Sending canister | 260_000 | ~$0.00000036 | 680_000 | ~$0.00000093 |
+| Xnet byte transmission | Per byte in inter-canister call | Sending canister | 1_000 | ~$0.00000000137 | 2_615 | ~$0.0000000036 |
+| Ingress message reception | Per ingress message received | Receiving canister | 1_200_000 | ~$0.0000016 | 3_138_461 | ~$0.0000043 |
+| Ingress byte reception | Per byte in ingress message | Receiving canister | 2_000 | ~$0.0000000027 | 5_230 | ~$0.0000000071 |
+| GiB storage per second | Storage cost per GiB per second | Canister with storage | 317_500 | ~$0.000000434 | 830_384 | ~$0.00000113 |
+| Canister base fee per second | Flat fee, independent of how much memory is used | Every canister with non-zero memory usage | 10_000 | ~$0.0000000137 | 26_153 | ~$0.0000000357 |
+
+**Storage cost per GiB:**
+
+| Subnet | Per month (30 days) | ~USD | Per year | ~USD |
+|--------|---------------------|------|----------|------|
+| 13-node | ~823 billion | ~$1.12 | ~10 trillion | ~$13.68 |
+| 34-node | ~2.15 trillion | ~$2.94 | ~26.2 trillion | ~$35.78 |
+
+The canister base fee adds ~25.9 billion cycles (~$0.035) per month on a 13-node subnet. Storage and the base fee both count toward the cycles a canister must keep to stay above its [freezing threshold](../guides/canister-management/settings.md#freezing-threshold).
+
+## Execution cost formula
+
+Each update message execution is charged as a base fee plus a per-instruction fee (the *Update message execution* and *1B Wasm32/Wasm64 instructions executed* rows in the Cost table above):
+
+```text
+total = base_fee + per_instruction_fee * num_instructions
+```
+
+Current values (13-node subnet):
+- `base_fee` = 5_000_000 cycles (~$0.0000068 USD)
+- `per_instruction_fee` = 1 cycle for Wasm32 canisters (so 1B instructions = 1B cycles ≈ $0.00137 USD), 2 cycles for Wasm64 canisters
+
+## Compute allocation
+
+By default canisters are scheduled best-effort. Setting `compute_allocation` guarantees execution slots:
+
+- **1%**: Scheduled every 100 rounds
+- **2%**: Scheduled every 50 rounds
+- **100%**: Scheduled every round
+
+Canisters on a subnet can allocate at most 149% in total. The per-second cost is `10M cycles * allocation_percent` on a 13-node subnet: see the *Compute allocation* row in the [Cost table](#cost-table) above for exact figures.
+
+## Storage reservation
+
+When a canister grows its memory (via `memory.grow`, `ic0.stable_grow()`, or Wasm installation), the system moves cycles from the canister's main balance into a **reserved cycles balance** to cover future storage payments.
+
+- If subnet usage is **below 750 GiB**: reservation per byte = 0 (no advance reservation).
+- If subnet usage is **above 750 GiB**: reservation per byte scales linearly from 0 up to about 9.5 years (300 million seconds) of payments at subnet capacity (2 TiB).
+
+Reserved cycles are non-transferable. Controllers can disable reservation by setting `reserved_cycles_limit = 0`, but opted-out canisters cannot allocate new memory when subnet usage exceeds 750 GiB.
+
+## Threshold cryptography
+
+Threshold signing and key derivation are core ICP protocol capabilities: the cryptographic operations happen entirely within the ICP network, distributed across the nodes of a designated subnet. The extra cost reflects computationally intensive threshold cryptography and cross-subnet coordination.
+
+### Threshold ECDSA and Schnorr signing
+
+`sign_with_ecdsa` and `sign_with_schnorr` are charged per signature. The fee is determined by the subnet where the signing key resides, not the calling canister's subnet. `ecdsa_public_key` and `schnorr_public_key` carry no cycle cost.
+
+| Key name | Algorithm(s) | Environment | Signing subnet | Cycles | ~USD |
+|----------|-------------|------------|----------------|--------|------|
+| `test_key_1` | ECDSA (`secp256k1`, `secp256r1`), Schnorr (`bip340secp256k1`, `ed25519`) | Testing | 13-node (`fuqsr`) | 10_000_000_000 | ~$0.0137 |
+| `key_1` | ECDSA (`secp256k1`, `secp256r1`), Schnorr (`bip340secp256k1`, `ed25519`) | Production | 34-node fiduciary (`pzp6e`) | 26_153_846_153 | ~$0.0357 |
+
+If the canister may be blackholed or called by other canisters, send more cycles than the listed cost: unused cycles are refunded, and this ensures calls succeed if the signing subnet grows in node count.
+
+### VetKeys
+
+`vetkd_derive_key` is charged per key derivation. `vetkd_public_key` carries no cycle cost. The fee is determined by the subnet where the VetKey resides, not the calling canister's subnet.
+
+| Key name | Environment | Signing subnet | Cycles | ~USD |
+|----------|------------|----------------|--------|------|
+| `test_key_1` | Testing | 13-node (`fuqsr`) | 10_000_000_000 | ~$0.0137 |
+| `key_1` | Production | 34-node fiduciary (`pzp6e`) | 26_153_846_153 | ~$0.0357 |
+
+If the canister may be blackholed or called by other canisters, send more cycles than the listed cost: unused cycles are refunded.
+
+## External integrations
+
+These features involve outbound calls to external networks. How many nodes take part in each call is the primary driver of the additional cost: the whole subnet for a fully replicated outcall, and fewer for the modes that reduce replication (see HTTPS outcalls below). The subsections below are ordered by pricing mechanism: HTTPS outcalls first as the base primitive, then the two RPC canisters that build on it, then the native chain integrations that use a two-tier pricing model.
+
+### HTTPS outcalls
+
+Outcalls have two pricing versions, chosen per call by the `pricing_version` field of `http_request`. Version `1` prices the request and response bytes that a call reserves. Version `2` prices the resources a call actually consumes, and is also the only pricing available to [`flexible_http_request`](ic-interface-spec/management-canister.md#ic-flexible_http_request), which has no `pricing_version` field.
+
+:::caution[Version 1 is deprecated]
+
+Version `1` is still the default, but it is deprecated. Version `2` is to become the default, after which version `1` will be removed. Callers are advised to migrate to version `2`.
+
+:::
+
+Rather than hard-coding either formula, read the cost at runtime: `ic0.cost_http_request` for version `1`, `ic0.cost_http_request_v2` for version `2`.
+
+**Version 1 (default, deprecated).** Costs scale with subnet size (`n` = number of nodes):
+
+```text
+total_fee  = base_fee + size_fee
+base_fee   = (3_000_000 + 60_000 * n) * n
+size_fee   = (400 * request_bytes + 800 * max_response_bytes) * n
+```
+
+`request_bytes` is the total serialized request size (URL + headers + body + transform name/context). `max_response_bytes` defaults to 2 MB (2,000,000 bytes, decimal) if not explicitly set by the canister, which on a 13-node subnet costs roughly 20.85 billion cycles.
+
+| Component | 13-node cycles | ~USD | 34-node cycles | ~USD |
+|-----------|----------------|------|----------------|------|
+| Per call (base) | 49_140_000 | ~$0.0000671 | 171_360_000 | ~$0.000234 |
+| Per request byte | 5_200 | ~$0.0000000071 | 13_600 | ~$0.0000000186 |
+| Per reserved response byte | 10_400 | ~$0.0000000142 | 27_200 | ~$0.0000000372 |
+
+**Version 2 (pay-as-you-go).** The price has three parts: a base fee charged when the call is accepted, a usage fee charged for each node that performs the outcall, and a delivery fee for putting the result into a block. `max_response_bytes` appears in none of them. It still caps the response, and because the worst-case usage that bounds the reservation is computed from it, a larger value means more of the payment is withheld while the call is in flight, but it no longer sets the price.
+
+What a call is **charged**, once it settles:
+
+```
+n = subnet size.  K = responses delivered (1 unless flexible).
+
+base_fee     = (1_000_000 + 50 * request_bytes + replication_term) * n
+  replication_term = 140_000 * n + 800 * n * n                       fully replicated
+                   = 90_000 * n + (2_000 * n + 100_000) * min_responses   otherwise
+
+usage_fee    = 50 * raw_response_bytes + 300 * roundtrip_ms
+                 + transform_instructions / 13
+                 (+ 50 * n * response_bytes      non-replicated and flexible only)
+
+delivery_fee = n * (10 * n + 600) * (response_bytes (+ 181 * K   flexible only))
+                 (+ (2_000 * n + 100_000) * n * (K - min_responses)   flexible only)
+```
+
+`usage_fee` is charged for each node that performs the outcall: all `n` of them for a fully replicated call, one for a non-replicated call, `total_requests` for a flexible one. The `13` dividing `transform_instructions` is not the node count: outcall fees are calibrated against a reference subnet size of 13, and this is the only term that carries that constant, so a node is charged the same for a transform on every subnet. `response_bytes` is the size after the transform. A non-replicated call (`is_replicated = false`) takes the `otherwise` branch with `min_responses = 1`. A flexible call that does not set `replication` defaults `min_responses` to `floor(2 / 3 * n) + 1`.
+
+| Component | 13-node cycles | ~USD | 34-node cycles | ~USD |
+|-----------|----------------|------|----------------|------|
+| Base, per fully replicated call | 38_417_600 | ~$0.0000525 | 227_283_200 | ~$0.000311 |
+| Base, per request byte | 650 | ~$0.0000000009 | 1_700 | ~$0.0000000023 |
+| Usage, per raw response byte | 650 | ~$0.0000000009 | 1_700 | ~$0.0000000023 |
+| Usage, per millisecond of round trip | 3_900 | ~$0.0000000053 | 10_200 | ~$0.0000000139 |
+| Usage, per million transform instructions | ~1_000_000 | ~$0.0000014 | ~2_615_000 | ~$0.0000036 |
+| Delivery, per delivered response byte | 9_490 | ~$0.0000000130 | 31_960 | ~$0.0000000437 |
+
+The three usage rows are charged per node that performs the outcall, and the figures assume all `n` of them do and each consumes the same amount, as a fully replicated call is priced: a non-replicated call is charged them once, and a flexible call `total_requests` times. Which term dominates depends on the call: round-trip time is capped at 60 seconds, which is 234 million cycles on a 13-node subnet, while a transform that uses the full instruction limit costs about 5 billion and delivering a 2MB response about 19 billion.
+
+**What to attach.** `ic0.cost_http_request_v2` does not return the figure above. Neither how many nodes will respond nor which result they will produce is known when the call is made, and delivering the result has to be paid out of the per-node budgets, so the amount it returns reserves for the most expensive result the call could still produce. It therefore exceeds what the call settles at, and the difference is refunded.
+
+Pass what you expect and you get a small reservation, at the cost of the outcall running within correspondingly tighter per-node limits. Pass the maxima a run could consume and you get the figure that cannot run short, which is also the most the system withholds:
+
+| Parameter | Maximum |
+|-----------|---------|
+| `http_roundtrip_time_ms` | `60_000`, the longest the system waits for a response |
+| `raw_response_bytes` | `max_response_bytes`, or `2_000_000` if it is unset |
+| `transformed_response_bytes` | the same as `raw_response_bytes`, plus `1_024` bytes: the Candid encoding of a response delivered without a transform, the largest content a node can deliver. A transformed response itself is capped at `max_response_bytes` |
+| `transform_instructions` | `5_000_000_000` (5 billion), the instruction limit of a query call |
+
+`request_bytes` and `outcall_type` follow from the request itself.
+
+The four values size one budget per node; they are not four independent limits. The response size cap and the response timeout each node runs under are derived from whatever is left of that budget, so a low expectation on one input also tightens the others. Delivery of the result is paid out of what the nodes leave unspent, which means an expectation set below what the call needs can fail at delivery, after the request has already been made.
+
+Either way, any attached surplus is refunded, so the charge follows the resources actually consumed. Those refunds arrive asynchronously: a node that never reported has its whole budget returned when the request times out, one minute after the response was delivered. A canister that reads its own balance right after an outcall will see it keep settling for a while afterwards, as further refunds arrive.
+
+### EVM RPC canister
+
+Calls to the EVM RPC canister use an HTTPS-outcall-based pricing structure with higher per-byte constants than standard HTTPS outcalls, scaled by the number of RPC services used for multi-provider consistency:
+
+```text
+(
+  5_912_000
+  + 60_000 * nodes_in_subnet
+  + 2400 * request_size_bytes
+  + 800 * max_response_size_bytes
+) * nodes_in_subnet * rpc_services
+```
+
+Typical cost: 10^8 to 10^9 cycles (~$0.0001 to $0.001 USD). On a 34-node subnet with a 1 kB request and 1 kB response using one RPC service: ~$0.00052.
+
+An additional `10_000_000 * nodes_in_subnet * rpc_services` collateral cycles must be attached per call; these are consumed by the EVM RPC canister as a reserve for future pricing changes and are not returned to the caller. Any cycles you attach above the total minimum (formula + collateral) are returned, so it is safe to send more than needed. Start with 10_000_000_000 cycles and adjust based on observed costs. Use the `requestCost` query method on the EVM RPC canister to get an exact estimate before calling.
+
+### SOL RPC canister
+
+The SOL RPC canister prices each call using the standard HTTPS outcall formula plus a `10_000_000 cycles × n` per-node processing fee, scaled by the number of RPC providers used:
+
+```text
+total_fee = (
+  (3_000_000 + 60_000 * n) * n             // base HTTP outcall fee
+  + (400 * request_bytes + 800 * max_response_bytes) * n  // size fee
+  + 10_000_000 * n                         // processing fee
+) * rpc_providers
+```
+
+`n` is the number of nodes in the subnet hosting the SOL RPC canister. Because each method uses a different default `max_response_bytes` and request serialization size, costs vary per method. As a reference point: `getBalance` with 3 RPC providers on a 34-node subnet costs approximately 1.7 billion cycles (~$0.0023 USD).
+
+To get the exact cycle estimate for a specific call before attaching cycles, use the corresponding query endpoint on the SOL RPC canister: `getBalanceCyclesCost`, `getBlockCyclesCost`, `getSlotCyclesCost`, `getTransactionCyclesCost`, `sendTransactionCyclesCost`, and equivalents for each method.
+
+See the [Solana guide](../guides/chain-fusion/solana.mdx) for integration examples.
+
+### Bitcoin integration API
+
+The Bitcoin API uses a two-tier pricing model: a base cost that is actually charged, and a higher minimum to attach with the call. The minimum is set above the base cost to allow for future subnet growth; any cycles not consumed are refunded. `bitcoin_get_utxos` and `bitcoin_get_block_headers` add a per-instruction component on top of their base fee because the Bitcoin canister executes Wasm to process those requests. `bitcoin_send_transaction` has no minimum: its cost is deterministic (base fee plus a per-byte fee), and the full amount attached is charged.
+
+**Bitcoin Testnet / Regtest:**
+
+| API call | Base cost (cycles) | Min. cycles to attach | ~USD (base) | ~USD (min. to attach) |
+|----------|--------------------|-----------------------|-------------|----------------------|
+| `bitcoin_get_balance` | 4_000_000 | 40_000_000 | ~$0.0000055 | ~$0.0000547 |
+| `bitcoin_get_utxos` | 20_000_000 + 0.4 × instructions | 4_000_000_000 | ~$0.0000273 + inst. | ~$0.00547 |
+| `bitcoin_get_current_fee_percentiles` | 4_000_000 | 40_000_000 | ~$0.0000055 | ~$0.0000547 |
+| `bitcoin_get_block_headers` | 20_000_000 + 0.4 × instructions | 4_000_000_000 | ~$0.0000273 + inst. | ~$0.00547 |
+| `bitcoin_send_transaction` (base) | 2_000_000_000 | N/A | ~$0.00273 | N/A |
+| `bitcoin_send_transaction` (per payload byte) | 8_000_000 | N/A | ~$0.0000109 | N/A |
+| `get_blockchain_info` | 4_000_000 | 40_000_000 | ~$0.0000055 | ~$0.0000547 |
+
+**Bitcoin Mainnet:**
+
+| API call | Base cost (cycles) | Min. cycles to attach | ~USD (base) | ~USD (min. to attach) |
+|----------|--------------------|-----------------------|-------------|----------------------|
+| `bitcoin_get_balance` | 10_000_000 | 100_000_000 | ~$0.0000137 | ~$0.000137 |
+| `bitcoin_get_utxos` | 50_000_000 + 1 × instructions | 10_000_000_000 | ~$0.0000683 + inst. | ~$0.0137 |
+| `bitcoin_get_current_fee_percentiles` | 10_000_000 | 100_000_000 | ~$0.0000137 | ~$0.000137 |
+| `bitcoin_get_block_headers` | 50_000_000 + 1 × instructions | 10_000_000_000 | ~$0.0000683 + inst. | ~$0.0137 |
+| `bitcoin_send_transaction` (base) | 5_000_000_000 | N/A | ~$0.00683 | N/A |
+| `bitcoin_send_transaction` (per payload byte) | 20_000_000 | N/A | ~$0.0000273 | N/A |
+| `get_blockchain_info` | 10_000_000 | 100_000_000 | ~$0.0000137 | ~$0.000137 |
+
+In Rust, the `ic-cdk-bitcoin-canister` crate handles cycle attachment automatically. In Motoko, use `(with cycles = amount)`. See the [Bitcoin guide](../guides/chain-fusion/bitcoin.md#cycle-costs) for implementation details.
+
+### Dogecoin integration API
+
+The Dogecoin integration API follows the same two-tier pricing model as the Bitcoin API. There is no testnet pricing tier: the fees below apply to Dogecoin Mainnet only.
+
+| API call | Base cost (cycles) | Min. cycles to attach | ~USD (base) | ~USD (min. to attach) |
+|----------|--------------------|-----------------------|-------------|----------------------|
+| `dogecoin_get_balance` | 10_000_000 | 100_000_000 | ~$0.0000137 | ~$0.000137 |
+| `dogecoin_get_utxos` | 50_000_000 + 1 × instructions | 10_000_000_000 | ~$0.0000683 + inst. | ~$0.0137 |
+| `dogecoin_get_current_fee_percentiles` | 10_000_000 | 100_000_000 | ~$0.0000137 | ~$0.000137 |
+| `dogecoin_get_block_headers` | 50_000_000 + 1 × instructions | 10_000_000_000 | ~$0.0000683 + inst. | ~$0.0137 |
+| `dogecoin_send_transaction` (base) | 5_000_000_000 | N/A | ~$0.00683 | N/A |
+| `dogecoin_send_transaction` (per payload byte) | 20_000_000 | N/A | ~$0.0000273 | N/A |
+
+`dogecoin_get_utxos` and `dogecoin_get_block_headers` add a per-instruction component because the Dogecoin canister executes Wasm to process those requests; the minimum to attach covers this variable cost. `dogecoin_send_transaction` has no minimum: its cost is deterministic, and the full amount attached is charged.
+
+See the [Dogecoin guide](../guides/chain-fusion/dogecoin.md) for integration patterns.
+
+## XDR exchange rate
+
+The cycle price is fixed by protocol: **1 trillion cycles = 1 XDR**. This ratio is set by NNS governance and does not change with ICP token price movements.
+
+All USD values on this page use **1 XDR = $1.366430** (May 22, 2026). Use cycle counts for precise budgeting; only the USD conversion fluctuates.
+
+### How the CMC tracks the rate
+
+The [Cycles Minting Canister (CMC)](../references/system-canisters.md#cycles-minting-canister-cmc) (`rkp4c-7iaaa-aaaaa-aaaca-cai`) calls the [exchange rate canister (XRC)](../references/protocol-canisters.md#exchange-rate-canister-xrc) every 5 minutes for the current ICP/XDR rate. The CMC exposes `get_icp_xdr_conversion_rate`, which returns `xdr_permyriad_per_icp`: the number of XDR per ICP, expressed in units of 1/10000 (for example, `19482` means 1 ICP = 1.9482 XDR). This is an ICP/XDR rate; the CMC does not track XDR/USD.
+
+### Getting the current XDR/USD rate
+
+**Manual lookup:** The [IMF's SDR valuation page](https://www.imf.org/external/np/fin/data/rms_sdrv.aspx) is the authoritative source. The page returns HTTP 403 to automated HTTP clients and cannot be fetched programmatically.
+
+**ICP Dashboard API (unsigned, easy for scripts):** Fetch the ICP/USD price and the ICP/XDR rate, then derive XDR/USD:
+
+```bash
+# ICP/USD (returns [[timestamp, "price_as_string"]])
+GET https://ic-api.internetcomputer.org/api/v3/icp-usd-rate
+
+# ICP/XDR in permyriad (returns [[timestamp, xdr_permyriad_per_icp]])
+GET https://ic-api.internetcomputer.org/api/v3/icp-xdr-conversion-rates?limit=1
+
+xdr_usd = icp_usd / (xdr_permyriad_per_icp / 10_000)
+```
+
+Example: ICP/USD = $2.67, ICP/XDR = 19482 / 10000 = 1.9482 → XDR/USD = 2.67 / 1.9482 ≈ $1.37.
+
+The ICP Dashboard API is not certified: responses are unsigned and not verifiable by the network.
+
+**CMC metrics endpoint (Prometheus, unsigned):** The CMC exposes a Prometheus metrics endpoint at `https://rkp4c-7iaaa-aaaaa-aaaca-cai.raw.icp.net/metrics` that includes `cmc_icp_xdr_conversion_rate` (current ICP/XDR) and `cmc_avg_icp_xdr_conversion_rate` (30-day moving average used for node provider rewards). Neither is certified. Apply the same formula to derive XDR/USD.
+
+**From canister code (certified):** Call the XRC for `ICP/USD` as a crypto/fiat pair (1B cycles, refunded if unused), and call the CMC `get_icp_xdr_conversion_rate` for ICP/XDR. Derive XDR/USD = ICP_USD / (xdr_permyriad_per_icp / 10_000). See [Fetch exchange rates](../guides/chain-fusion/exchange-rates.md) for XRC integration code.
+
+## Related pages
+
+- [Cycles management](../guides/canister-management/cycles-management.md): Topping up and monitoring canister balances
+- [Cycles](../concepts/cycles.md): Why canisters (not users) pay for execution
+- [Chain-key cryptography](../concepts/chain-key-cryptography.md): Threshold signing and VetKeys
+- [Subnet types](subnet-types.md): Cost multipliers per subnet type
+- [Resource limits](resource-limits.md): Instruction limits, memory caps, and message size constraints
+
+<!-- Upstream: informed by dfinity/ic rs/config/src/subnet_config.rs, rs/cycles_account_manager/src/cycles_account_manager.rs; dfinity/portal docs/building-apps/essentials/gas-cost.mdx, docs/references/cycles-cost-formulas.mdx, docs/references/t-sigs-how-it-works.mdx, docs/references/bitcoin-how-it-works.mdx, docs/building-apps/network-features/vetkeys/api.mdx, docs/building-apps/chain-fusion/ethereum/evm-rpc/costs.mdx; dfinity/dogecoin-canister interface/src/lib.rs, docs/src/endpoints.md; dfinity/sol-rpc-canister canister/src/constants.rs, canister/src/memory/mod.rs, canister/src/http/mod.rs, integration_tests/tests/tests.rs -->

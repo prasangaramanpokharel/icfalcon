@@ -82,6 +82,8 @@ falcon p:check --local      # skills + code audit + backend + frontend build
 | Frontend | `.agent/skills/frontendStandard/SKILL.md` |
 | @icp-sdk | `.agent/skills/icpsdkStandard/SKILL.md` |
 | Versions & dependencies | `.agent/skills/versionStandard/SKILL.md` |
+| **ICP Protocol & Architecture** | `backend/.agent/skills/internetComputer/SKILL.md` |
+| **Backend Local Index** | `backend/.agent/SKILLS.md` |
 | **Wallet demo (Phase 3)** | `/wallet` — [`docs/phase/3/PLAN.md`](docs/phase/3/PLAN.md) |
 | Logo / brand | `.agent/skills/logoStandard/SKILL.md` |
 | II auth | `.agent/skills/motokoStandard/internetIdentityAuthStandard/SKILL.md` |

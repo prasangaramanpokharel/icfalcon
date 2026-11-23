@@ -1,0 +1,126 @@
+---
+title: "HTTPS outcalls"
+description: "How canisters call external APIs and web services directly, without oracles or intermediaries."
+sidebar:
+  order: 8
+---
+
+Canisters on the Internet Computer can make HTTP requests to any public web server (fetching API data, posting to webhooks, or querying external services) without relying on oracles or other intermediaries. This capability is called **HTTPS outcalls**.
+
+ICP runs every canister on a subnet where all replicas execute the same code independently and must reach consensus. Outbound HTTP requests are non-trivial in this model: each replica independently contacts the server and typically receives a slightly different response: timestamps, headers, or field ordering vary, which would cause replicas to diverge. The traditional workaround is **oracles**: third-party services that fetch external data and relay it to the network, at the cost of extra complexity, fees, and a trust assumption. HTTPS outcalls solve the problem directly: the subnet reaches consensus over the response internally, so canisters call external APIs without a middleman.
+
+## Outcall modes
+
+HTTPS outcalls come in three modes. Two are selected by the `is_replicated` field of the `http_request` method; the third is a separate management canister method, `flexible_http_request`.
+
+**Replicated mode** (default) is what the consensus mechanism below describes: all replicas independently fetch the URL, a transform function normalizes the responses, and the subnet agrees on a single result. This provides the strongest integrity guarantee: the response is confirmed by a supermajority of nodes, making it extremely difficult for any single party to tamper with it. The tradeoff is that all replicas (typically 13) send the same request to the external server within milliseconds of each other, which can trigger API rate limits.
+
+**Non-replicated mode** (`is_replicated = false`) has a single replica make the request. No consensus is needed, so there is no transform function requirement and no rate-limit pressure on the external server. The tradeoff is trust: the single replica that handles the request could theoretically observe or modify the response before returning it to the canister. This mode is appropriate when the endpoint is idempotent, rate limits are a concern, or you're making POST requests where duplicate submissions would cause problems.
+
+**Flexible mode** (`flexible_http_request`) has a committee of nodes make the request and hands the canister their individual responses rather than one agreed result. The canister decides what to make of them. For example: take a median, require that some of them match, or use the first that parses. The caller sizes the committee and states how many responses it needs and is willing to receive. A smaller committee costs less, a larger one is harder for any single node to influence. This suits endpoints whose data changes too fast for replicas to ever agree, such as live prices or feeds that stamp every response, where replicated mode would simply fail to reach consensus. The tradeoff is that reconciling the responses becomes your canister's job.
+
+Flexible outcalls are always priced with pay-as-you-go pricing (version 2), described under [Cycle costs](#cycle-costs) below.
+
+## How outcalls reach consensus
+
+When a canister calls the management canister's `http_request` method, the following happens:
+
+1. **The request is replicated.** The subnet stores the pending request in replicated state. Each replica's networking layer picks it up independently.
+
+2. **Every replica makes the same HTTP request.** On a 13-node subnet, 13 independent requests go to the target server. The IC first tries a direct IPv6 connection; if that fails (e.g., the server is IPv4-only), it retries through a SOCKS proxy.
+
+3. **Each replica receives its own response.** These responses are often *almost* identical but may differ in non-deterministic fields: timestamps in headers, request IDs, JSON field ordering, or IP-dependent content.
+
+4. **The transform function normalizes responses.** The canister provides a transform function (a query method) that each replica runs locally on its response. The transform strips or normalizes the non-deterministic parts so that all honest replicas produce the same transformed response.
+
+5. **Consensus agrees on the response.** The IC's consensus protocol requires at least 2/3 of replicas to produce the same transformed response. If enough replicas agree, that response is returned to the canister. If they can't agree, the call fails with a timeout.
+
+The transform function is critical. Without it, even minor differences between responses (a header timestamp off by a millisecond) prevent consensus. If consensus cannot be reached, the call eventually times out: this is the most common failure mode when developing outcalls.
+
+Flexible outcalls follow the same path, with two differences. In step 2 only the committee the caller sized issues the request, not every replica. And in step 5 the subnet agrees on which responses to deliver rather than on what the response says, so responses that disagree are returned instead of failing the call. The transform still runs, on each node's own response.
+
+> **Local testing caveat:** The local replica runs a single node, so all responses pass consensus automatically: even without a transform function. Transform and consensus issues only surface when you deploy to a multi-node subnet.
+
+For practical guidance on writing transform functions, see the [HTTPS outcalls guide](../guides/backends/https-outcalls.md).
+
+## The transform function
+
+A transform function is a **query method** exported by your canister that takes a raw HTTP response and returns a cleaned version. The IC calls it on each replica's response before passing it to consensus.
+
+There are two general strategies:
+
+- **Extract only what you need.** Parse the response body (usually JSON), pull out the specific data fields your canister requires, and discard everything else. This produces the smallest possible response and is easiest to get right.
+
+- **Strip the variable parts.** Remove headers and body fields that vary between responses (timestamps, request IDs, ordering differences) while keeping the rest of the structure intact.
+
+The first approach is recommended whenever possible: it produces smaller responses, is simpler to implement, and is less likely to miss a non-deterministic field.
+
+A common pattern is stripping all response headers (they frequently contain timestamps and server-specific metadata) and either keeping the body as-is (if it's already deterministic) or re-serializing JSON to normalize field ordering.
+
+## Request types and idempotency
+
+HTTPS outcalls support `GET`, `HEAD`, and `POST` in every mode. `PUT`, `DELETE`, and `PATCH` are restricted to the modes where the number of requests and responses is fixed and known: non-replicated mode, and flexible mode when the committee size and the required and accepted response counts are all equal. The restriction exists because replicated outcalls with `is_replicated = true` do not wait for every request to finish, so one mutating request could land after a later one and undo it.
+
+**GET and HEAD** requests are straightforward: they're inherently idempotent (repeating them doesn't change server state), so having 13 replicas send the same GET is harmless. `HEAD` is particularly useful for determining a resource's response size before making the actual request, which helps you set `max_response_bytes` accurately.
+
+**POST requests** require more care. Because all replicas send the request independently, a non-idempotent POST endpoint (like "create order") will be called once per replica: potentially 13 times on a standard subnet. To prevent this:
+
+- **Use an idempotency key.** Include a unique identifier in the request headers. Well-designed APIs recognize duplicate requests by this key and process only the first one.
+- **Design for idempotency.** If you control the target API, make the endpoint handle duplicate requests gracefully.
+- **Read back and verify.** After a POST, make a GET request to confirm the expected state change happened exactly once.
+
+Not all servers support idempotency keys, so evaluate this on a case-by-case basis before using POST outcalls for state-changing operations.
+
+## Cycle costs
+
+HTTPS outcalls are not free. The calling canister must attach cycles to cover the cost. The system API reports how many cycles to attach, so a canister never has to hard-code a price: `ic0.cost_http_request_v2` for pay-as-you-go pricing, and the older `ic0.cost_http_request` for deprecated legacy pricing (charged in advance).
+
+There are two pricing models, chosen per call by the `pricing_version` field.
+
+:::caution[Version 1 is deprecated]
+
+Version 1 is still the default, and is what a call gets unless it asks for version 2. It is nonetheless deprecated: version 2 is to become the default, after which version 1 will be removed. New canisters should select version 2, and existing canisters should plan to migrate.
+
+:::
+
+Both languages provide a wrapper that computes and attaches the required amount, and both price with version `2`: the builders in `ic-cdk-management-canister` for Rust, and `Call.httpRequest` from the `ic` mops package for Motoko. Each has a counterpart for flexible outcalls. The [HTTPS outcalls guide](../guides/backends/https-outcalls.md#cycle-costs) covers what each wrapper attaches and the pitfalls of overriding it.
+
+**Version 1** charges based on the following two factors:
+
+- **Request size**: the combined byte length of the URL, headers, body, transform function name, and transform context.
+- **`max_response_bytes`**: the maximum response size you declare. This is what you're charged for, not the actual response size.
+
+If you omit `max_response_bytes`, the system assumes the maximum of 2 MB and charges accordingly: roughly 20.85 billion cycles on a 13-node subnet. Always set this to a reasonable upper bound for your expected response to avoid overpaying. Unused cycles are refunded.
+
+**Version 2** charges for what the call actually consumes: the bytes that arrive, the time the request takes, the instructions the transform function runs, and the size of the response that is delivered. `max_response_bytes` still bounds the response, but it no longer sets the price. A generous cap therefore adds nothing to the charge. But because the worst-case usage that bounds the reservation is computed from it, a generous cap holds more cycles for the duration of the call, which limits how many outcalls the canister can have in flight. The tradeoff is that the attached cycles are not only the payment but also the budget the call runs within. A call that does not cover the base fee is rejected up front. Beyond that, attaching less than the call needs is accepted: it runs with proportionally smaller limits on response size, response time, and transform instructions, and fails partway through rather than up front. Use `ic0.cost_http_request_v2` to compute a recommendation of what to attach.
+
+For exact pricing formulas for both versions, see the [cycles costs reference](../references/cycle-costs.md).
+
+## Limitations
+
+- **HTTPS only.** Plain HTTP is not supported. The target server must have a valid TLS certificate.
+- **2 MB response limit.** The maximum is 2,000,000 bytes (decimal, not 2^21). The limit covers the response's header names and values plus the body, not the body alone, and it is enforced twice: on the raw response as it arrives from the server, and again on the output of the transform function. A transform therefore cannot rescue a response that already exceeded the cap, because the first check runs before the transform does. Size `max_response_bytes` for the headers and body as they arrive from the server. In flexible mode the responses delivered together must additionally fit a 2 MiB total.
+- **Public endpoints only.** Canisters cannot reach localhost, private IP ranges (10.x.x.x, 192.168.x.x), or other non-routable addresses.
+- **No streaming or WebSocket.** Outcalls are single request-response pairs. Long-lived connections are not supported.
+- **Two timeouts.** If the external server does not respond within 30 seconds, or the subnet does not produce a response within 60 seconds, the call is rejected. It does not trap, so handle the error case rather than relying on a trap.
+- **Rate limiting.** All canisters on a subnet share the same IPv6 prefixes. If many canisters on the same subnet call the same server, they share its rate limit quota. Using API keys with per-key quotas mitigates this.
+- **Shared API keys are visible to all replicas.** An API key stored in canister state is readable by every replica. A compromised replica could use the key to make entirely different, unauthorized requests to the external service: not just replay the canister's intended request. [TEE-enabled subnets](node-infrastructure.md#trusted-execution-environments) mitigate this by running replicas in hardware-enforced enclaves, preventing node operators from reading canister memory. Consider deploying canisters that store sensitive credentials on a TEE-enabled subnet.
+
+## HTTPS outcalls vs. oracles
+
+| | HTTPS outcalls | Oracles |
+|---|---|---|
+| **Trust model** | Subnet replicas + target server only | Subnet + oracle provider(s) + target server |
+| **Cost** | Cycle cost of the outcall only | Oracle fees + ingress message costs |
+| **Latency** | Single round-trip (seconds) | Multiple hops: canister → oracle contract → oracle service → server → back (higher latency) |
+| **Setup** | Call the management canister API directly | Deploy or integrate with oracle contract, configure oracle provider |
+| **Decentralization** | Built into the subnet: no third parties | Depends on the oracle provider's architecture |
+
+HTTPS outcalls can replace oracles for most use cases: price feeds, API queries, webhook notifications, and data verification. Oracles may still be useful if you need features like aggregated multi-source data feeds or historical data caching that an oracle provider maintains as a service.
+
+## Next steps
+
+- [HTTPS outcalls guide](../guides/backends/https-outcalls.md): practical how-to with code examples in Motoko and Rust
+- [Chain Fusion: Ethereum integration](../guides/chain-fusion/ethereum.md): uses HTTPS outcalls via the EVM RPC canister
+- [Cycles costs reference](../references/cycle-costs.md): detailed pricing formulas
+<!-- Upstream: informed by dfinity/portal docs/references/https-outcalls-how-it-works.mdx -->

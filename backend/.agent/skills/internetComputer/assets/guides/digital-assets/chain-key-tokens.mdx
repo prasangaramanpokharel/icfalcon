@@ -1,0 +1,533 @@
+---
+title: "Chain-key tokens"
+description: "Deposit, withdraw, and transfer ckBTC, ckETH, ckERC20, ckDOGE, and ckSOL: ICP-native representations of external assets backed 1:1 with no bridges or custodians"
+sidebar:
+  order: 2
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Chain-key tokens are ICP-native representations of assets from other blockchains. Each one is backed 1:1 by the original asset and controlled entirely by ICP canisters. No bridges, no wrapped tokens, no third-party custodians.
+
+All chain-key tokens implement the [ICRC-1 standard](../../references/digital-asset-standards.md#icrc-1-fungible-tokens). The deposit and withdrawal flows use [ICRC-2](../../references/digital-asset-standards.md#icrc-2-approve-and-transfer-from) `icrc2_approve` to authorize the minter to burn tokens on your behalf.
+
+This guide covers deposit and withdrawal flows for each asset, plus the pattern for issuing per-user deposit addresses from a backend canister.
+
+For plain ICRC-1/ICRC-2 transfers without the minting/withdrawal flows, see [Ledgers](ledgers.md).
+
+## Available chain-key assets
+
+The current chain-key assets are: **ckBTC** (Bitcoin), **ckETH** (Ether), **ckERC20** (ERC-20 tokens including ckUSDC, ckUSDT, ckLINK, and others), **ckDOGE** (Dogecoin), and **ckSOL** (Solana). Transfer code is identical across all of them: only the canister ID and fee denomination differ. See [Canister IDs](../../references/chain-key-canister-ids.md) for the full list.
+
+If you need direct Bitcoin UTXO access or custom Bitcoin transaction signing, see [Bitcoin integration](../chain-fusion/bitcoin.md). If you need to call Ethereum contracts or interact with Ethereum infrastructure directly, see [Ethereum integration](../chain-fusion/ethereum.md). For fast ICP-native transfers, chain-key tokens are the simpler choice.
+
+## How chain-key tokens maintain their peg
+
+ckBTC and ckETH are not wrapped assets in the traditional sense. The minter canisters hold the underlying BTC and ETH in addresses they control through [chain-key cryptography](../../concepts/chain-key-cryptography.md), using threshold signatures to sign transactions. No private key exists anywhere. Every ckBTC in circulation corresponds to exactly one satoshi of BTC held by the minter.
+
+## ckBTC
+
+### Deposit: BTC → ckBTC
+
+The deposit flow has two steps:
+
+1. **Get a deposit address**: call `get_btc_address` on the ckBTC minter with the owner principal and an optional subaccount. The minter returns a unique Bitcoin address.
+2. **Mint ckBTC**: after BTC is sent to that address, call `update_balance` on the minter. The minter checks for new UTXOs and mints ckBTC to the corresponding ICRC-1 account.
+
+The minter requires a minimum number of Bitcoin confirmations before minting (currently 4 on mainnet). `update_balance` returns `NoNewUtxos` if confirmations have not yet been reached: your app should poll or prompt the user to wait.
+
+<Tabs syncKey="lang">
+<TabItem label="Motoko">
+
+```motoko
+import Principal "mo:core/Principal";
+
+persistent actor Self {
+
+  type UpdateBalanceResult = {
+    #Ok : [UtxoStatus];
+    #Err : UpdateBalanceError;
+  };
+
+  type UtxoStatus = {
+    #ValueTooSmall : Utxo;
+    #Tainted : Utxo;
+    #Checked : Utxo;
+    #Minted : { block_index : Nat64; minted_amount : Nat64; utxo : Utxo };
+  };
+
+  type Utxo = {
+    outpoint : { txid : Blob; vout : Nat32 };
+    value : Nat64;
+    height : Nat32;
+  };
+
+  type UpdateBalanceError = {
+    #NoNewUtxos : {
+      required_confirmations : Nat32;
+      pending_utxos : ?[{ outpoint : { txid : Blob; vout : Nat32 }; value : Nat64; confirmations : Nat32 }];
+      current_confirmations : ?Nat32;
+    };
+    #AlreadyProcessing;
+    #TemporarilyUnavailable : Text;
+    #GenericError : { error_code : Nat64; error_message : Text };
+  };
+
+  // ckBTC minter: mainnet
+  transient let ckbtcMinter : actor {
+    get_btc_address : shared ({ owner : ?Principal; subaccount : ?Blob }) -> async Text;
+    update_balance : shared ({ owner : ?Principal; subaccount : ?Blob }) -> async UpdateBalanceResult;
+  } = actor "mqygn-kiaaa-aaaar-qaadq-cai";
+
+  // Get the BTC deposit address for this canister's default account
+  public shared func getDepositAddress() : async Text {
+    await ckbtcMinter.get_btc_address({
+      owner = ?Principal.fromActor(Self);
+      subaccount = null;
+    })
+  };
+
+  // Check for new BTC deposits and mint ckBTC
+  public shared func checkForDeposit() : async UpdateBalanceResult {
+    await ckbtcMinter.update_balance({
+      owner = ?Principal.fromActor(Self);
+      subaccount = null;
+    })
+  };
+}
+```
+
+</TabItem>
+<TabItem label="Rust">
+
+```rust
+use candid::{CandidType, Deserialize, Principal};
+use ic_cdk::update;
+use ic_cdk::call::Call;
+
+const CKBTC_MINTER: &str = "mqygn-kiaaa-aaaar-qaadq-cai";
+
+#[derive(CandidType, Deserialize, Debug)]
+struct GetBtcAddressArgs {
+    owner: Option<Principal>,
+    subaccount: Option<Vec<u8>>,
+}
+
+fn minter_id() -> Principal {
+    Principal::from_text(CKBTC_MINTER).unwrap()
+}
+
+// Get the BTC deposit address for this canister's default account
+#[update]
+async fn get_deposit_address() -> String {
+    let args = GetBtcAddressArgs {
+        owner: Some(ic_cdk::api::canister_self()),
+        subaccount: None,
+    };
+
+    let (address,): (String,) = Call::unbounded_wait(minter_id(), "get_btc_address")
+        .with_arg(args)
+        .await
+        .expect("Failed to get BTC address")
+        .candid_tuple()
+        .expect("Failed to decode response");
+
+    address
+}
+```
+
+</TabItem>
+</Tabs>
+
+For per-user deposit addresses where each user gets a unique BTC address, see [Per-user deposit addresses](#per-user-deposit-addresses).
+
+### Withdrawal: ckBTC → BTC
+
+To convert ckBTC back to BTC, your canister must:
+
+1. **Approve the minter**: call `icrc2_approve` on the ckBTC ledger, granting the minter canister an allowance to burn ckBTC from the account. The amount must include the transfer fee.
+2. **Request withdrawal**: call `retrieve_btc_with_approval` on the minter with the destination Bitcoin address and the amount in satoshis. The minimum withdrawal amount is 50,000 satoshis (0.0005 BTC).
+
+The minter burns the ckBTC and submits a Bitcoin transaction. BTC arrives at the destination address after Bitcoin confirmations (typically 1-2 hours on mainnet).
+
+<Tabs syncKey="lang">
+<TabItem label="Motoko">
+
+```motoko
+import Principal "mo:core/Principal";
+import Blob "mo:core/Blob";
+import Nat "mo:core/Nat";
+import Nat8 "mo:core/Nat8";
+import Nat64 "mo:core/Nat64";
+import Int "mo:core/Int";
+import Time "mo:core/Time";
+import Array "mo:core/Array";
+import Runtime "mo:core/Runtime";
+
+persistent actor Self {
+
+  type Account = { owner : Principal; subaccount : ?Blob };
+
+  type ApproveArg = {
+    from_subaccount : ?Blob;
+    spender : Account;
+    amount : Nat;
+    expected_allowance : ?Nat;
+    expires_at : ?Nat64;
+    fee : ?Nat;
+    memo : ?Blob;
+    created_at_time : ?Nat64;
+  };
+
+  type ApproveError = {
+    #BadFee : { expected_fee : Nat };
+    #InsufficientFunds : { balance : Nat };
+    #AllowanceChanged : { current_allowance : Nat };
+    #Expired : { ledger_time : Nat64 };
+    #TooOld;
+    #CreatedInFuture : { ledger_time : Nat64 };
+    #Duplicate : { duplicate_of : Nat };
+    #TemporarilyUnavailable;
+    #GenericError : { error_code : Nat; message : Text };
+  };
+
+  type RetrieveBtcWithApprovalArgs = { address : Text; amount : Nat64; from_subaccount : ?Blob };
+
+  type RetrieveBtcResult = {
+    #Ok : { block_index : Nat64 };
+    #Err : RetrieveBtcError;
+  };
+
+  type RetrieveBtcError = {
+    #MalformedAddress : Text;
+    #AlreadyProcessing;
+    #AmountTooLow : Nat64;
+    #InsufficientFunds : { balance : Nat64 };
+    #InsufficientAllowance : { allowance : Nat64 };
+    #TemporarilyUnavailable : Text;
+    #GenericError : { error_code : Nat64; error_message : Text };
+  };
+
+  transient let ckbtcLedger : actor {
+    icrc2_approve : shared (ApproveArg) -> async { #Ok : Nat; #Err : ApproveError };
+  } = actor "mxzaz-hqaaa-aaaar-qaada-cai";
+
+  transient let ckbtcMinter : actor {
+    retrieve_btc_with_approval : shared (RetrieveBtcWithApprovalArgs) -> async RetrieveBtcResult;
+  } = actor "mqygn-kiaaa-aaaar-qaadq-cai";
+
+  func principalToSubaccount(p : Principal) : Blob {
+    let bytes = Blob.toArray(Principal.toBlob(p));
+    let size = bytes.size();
+    let sub = Array.tabulate<Nat8>(32, func(i : Nat) : Nat8 {
+      if (i == 0) { Nat.toNat8(size) }
+      else if (i <= size) { bytes[i - 1] }
+      else { 0 }
+    });
+    Array.toBlob(sub)
+  };
+
+  // Withdraw ckBTC to a Bitcoin address (minimum 50,000 satoshis)
+  public shared ({ caller }) func withdrawToBtc(btcAddress : Text, amount : Nat64) : async RetrieveBtcResult {
+    if (Principal.isAnonymous(caller)) { Runtime.trap("Authentication required") };
+    let fromSubaccount = principalToSubaccount(caller);
+    let minterPrincipal = Principal.fromText("mqygn-kiaaa-aaaar-qaadq-cai");
+    // Set created_at_time for deduplication: two identical approvals within 24h
+    // would both execute without this. Omit if you intentionally allow retries.
+    let now = ?Nat.toNat64(Int.abs(Time.now()));
+
+    // Step 1: approve the minter to spend ckBTC (amount + fee)
+    let approveResult = await ckbtcLedger.icrc2_approve({
+      from_subaccount = ?fromSubaccount;
+      spender = { owner = minterPrincipal; subaccount = null };
+      amount = Nat64.toNat(amount) + 10; // amount + 10 satoshi fee for the burn
+      expected_allowance = null;
+      expires_at = null;
+      fee = ?10;
+      memo = null;
+      created_at_time = now;
+    });
+
+    switch (approveResult) {
+      case (#Err(_)) { return #Err(#TemporarilyUnavailable("Approve for minter failed")) };
+      case (#Ok(_)) {};
+    };
+
+    // Step 2: request the withdrawal
+    await ckbtcMinter.retrieve_btc_with_approval({
+      address = btcAddress;
+      amount = amount;
+      from_subaccount = ?fromSubaccount;
+    })
+  };
+}
+```
+
+</TabItem>
+<TabItem label="Rust">
+
+```rust
+use candid::{CandidType, Deserialize, Nat, Principal};
+use ic_cdk::update;
+use ic_cdk::call::Call;
+use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc2::approve::{ApproveArgs, ApproveError};
+
+const CKBTC_LEDGER: &str = "mxzaz-hqaaa-aaaar-qaada-cai";
+const CKBTC_MINTER: &str = "mqygn-kiaaa-aaaar-qaadq-cai";
+
+#[derive(CandidType, Deserialize, Debug)]
+struct RetrieveBtcWithApprovalArgs {
+    address: String,
+    amount: u64,
+    from_subaccount: Option<Vec<u8>>,
+}
+
+#[derive(CandidType, Deserialize, Debug)]
+struct RetrieveBtcOk {
+    block_index: u64,
+}
+
+#[derive(CandidType, Deserialize, Debug)]
+enum RetrieveBtcError {
+    MalformedAddress(String),
+    AlreadyProcessing,
+    AmountTooLow(u64),
+    InsufficientFunds { balance: u64 },
+    InsufficientAllowance { allowance: u64 },
+    TemporarilyUnavailable(String),
+    GenericError { error_code: u64, error_message: String },
+}
+
+type RetrieveBtcResult = Result<RetrieveBtcOk, RetrieveBtcError>;
+
+fn principal_to_subaccount(principal: &Principal) -> [u8; 32] {
+    let mut subaccount = [0u8; 32];
+    let principal_bytes = principal.as_slice();
+    subaccount[0] = principal_bytes.len() as u8;
+    subaccount[1..1 + principal_bytes.len()].copy_from_slice(principal_bytes);
+    subaccount
+}
+
+// Withdraw ckBTC to a Bitcoin address (minimum 50,000 satoshis)
+#[update]
+async fn withdraw_to_btc(btc_address: String, amount: u64) -> RetrieveBtcResult {
+    let caller = ic_cdk::api::msg_caller();
+    assert_ne!(caller, Principal::anonymous(), "Authentication required");
+
+    let from_subaccount = principal_to_subaccount(&caller);
+    let ledger = Principal::from_text(CKBTC_LEDGER).unwrap();
+    let minter = Principal::from_text(CKBTC_MINTER).unwrap();
+    // Set created_at_time for deduplication: two identical approvals within 24h
+    // would both execute without this. Omit if you intentionally allow retries.
+    let now = Some(ic_cdk::api::time());
+
+    // Step 1: approve the minter to spend ckBTC (amount + fee)
+    let approve_args = ApproveArgs {
+        from_subaccount: Some(from_subaccount),
+        spender: Account { owner: minter, subaccount: None },
+        amount: Nat::from(amount) + Nat::from(10u64), // amount + 10 satoshi fee for the burn
+        expected_allowance: None,
+        expires_at: None,
+        fee: Some(Nat::from(10u64)),
+        memo: None,
+        created_at_time: now,
+    };
+
+    let (approve_result,): (Result<Nat, ApproveError>,) = Call::unbounded_wait(ledger, "icrc2_approve")
+        .with_arg(approve_args)
+        .await
+        .expect("Failed to call icrc2_approve")
+        .candid_tuple()
+        .expect("Failed to decode response");
+
+    if let Err(e) = approve_result {
+        return Err(RetrieveBtcError::GenericError {
+            error_code: 0,
+            error_message: format!("Approve failed: {:?}", e),
+        });
+    }
+
+    // Step 2: request the withdrawal
+    let args = RetrieveBtcWithApprovalArgs {
+        address: btc_address,
+        amount,
+        from_subaccount: Some(from_subaccount.to_vec()),
+    };
+
+    let (result,): (RetrieveBtcResult,) = Call::unbounded_wait(minter, "retrieve_btc_with_approval")
+        .with_arg(args)
+        .await
+        .expect("Failed to call retrieve_btc_with_approval")
+        .candid_tuple()
+        .expect("Failed to decode response");
+
+    result
+}
+```
+
+</TabItem>
+</Tabs>
+
+## ckETH and ckERC20
+
+The ckETH minter handles both ETH and ERC-20 deposits using a shared Ethereum helper smart contract. It monitors the contract for deposit events via HTTPS outcalls and mints the corresponding ckETH or ckERC20 to the target ICRC-1 account.
+
+> Always verify the helper contract address before any important transfer: call `get_minter_info` on the ckETH minter and check `deposit_with_subaccount_helper_contract_address`.
+
+### Deposit: ETH → ckETH
+
+1. Call `depositEth` on the ckETH helper contract on Ethereum (mainnet: `0x18901044688D3756C35Ed2b36D93e6a5B8e00E68`), passing:
+   - The amount of ETH.
+   - Your ICP principal encoded as `bytes32`.
+   - A 32-byte subaccount (`0x` for the default account, or a derived subaccount for per-user deposits; see [Per-user deposit addresses](#per-user-deposit-addresses)).
+2. The minter detects the `ReceivedEthOrErc20` event and mints ckETH to `(principal, subaccount)` after roughly 20 minutes.
+
+> The ckETH deposit flow requires an Ethereum wallet or library. For sending Ethereum transactions from an ICP canister, see [Ethereum integration](../chain-fusion/ethereum.md).
+
+### Deposit: ERC-20 → ckERC20
+
+The ERC-20 deposit flow uses the same helper contract and minter:
+
+1. Call `approve(helper_address, amount)` on the ERC-20 token contract to allow the helper contract to spend your tokens.
+2. Call `depositErc20` on the helper contract, passing:
+   - The ERC-20 token contract address.
+   - The amount.
+   - Your ICP principal as `bytes32`.
+   - A 32-byte subaccount (`0x` for the default account).
+3. The minter detects the `ReceivedEthOrErc20` event and mints the corresponding ckERC20 to `(principal, subaccount)`.
+
+Supported ERC-20 tokens on mainnet: USDC, USDT, EURC, WBTC, wstETH, LINK, UNI, SHIB, PEPE, XAUT, and OCT. For canister IDs, see [Chain-Key Token Canister IDs](../../references/chain-key-canister-ids.md#ckerc20). For the authoritative current list including any newly added tokens, call `get_minter_info` on the ckETH minter and check `supported_ckerc20_tokens`.
+
+### Withdrawal: ckETH or ckERC20 → ETH / ERC-20
+
+The withdrawal flow follows the same approve-then-request pattern as ckBTC:
+
+1. Call `icrc2_approve` on the respective ledger, granting the ckETH minter an allowance.
+2. Call `withdraw_eth` on the minter with a destination Ethereum address and the amount in wei. The same minter handles withdrawals for all ckERC20 tokens.
+
+The minter burns the token and submits an Ethereum transaction. Funds arrive after Ethereum finalization, roughly 20 minutes on mainnet.
+
+> Query `icrc1_fee` on the ledger before withdrawing. The ckETH fee is denominated in wei and can change.
+
+## ckDOGE
+
+ckDOGE follows the same UTXO-based pattern as ckBTC. The minter issues a unique Dogecoin address per `(owner, subaccount)` account.
+
+> ckDOGE is in beta. The API is stable but the integration warrants careful observation during this period.
+
+### Deposit: DOGE → ckDOGE
+
+1. Call `get_deposit_address` on the ckDOGE minter (`eqltq-xqaaa-aaaar-qb3vq-cai`) with the owner principal and an optional subaccount. The minter returns a unique Dogecoin address.
+2. Send DOGE to that address from any Dogecoin wallet.
+3. Call `update_balance` on the minter to trigger minting. The minter checks for confirmed UTXOs and mints ckDOGE to the corresponding ICRC-1 account.
+
+`update_balance` returns `NoNewUtxos` if the required confirmations have not yet been reached.
+
+### Withdrawal: ckDOGE → DOGE
+
+1. Call `icrc2_approve` on the ckDOGE ledger (`efmc5-wyaaa-aaaar-qb3wa-cai`), granting the minter an allowance.
+2. Call `retrieve_doge_with_approval` on the minter with the destination Dogecoin address and the amount in koinus (1 DOGE = 100,000,000 koinus).
+
+The minter burns ckDOGE and submits a signed Dogecoin transaction using threshold ECDSA.
+
+For implementation details and the Candid interface, see the [ckDOGE source](https://github.com/dfinity/ic/tree/master/rs/dogecoin/ckdoge).
+
+## ckSOL
+
+ckSOL follows a similar pattern to ckBTC: the minter issues a unique Solana deposit address per `(owner, subaccount)` account.
+
+### Deposit: SOL → ckSOL
+
+1. Call `get_deposit_address` on the ckSOL minter with your ICP principal and optional subaccount. The minter returns a unique Solana address.
+2. Send SOL to that address from any Solana wallet.
+3. Call `process_deposit` on the minter with the Solana transaction signature, owner principal, and subaccount (attach cycles to cover the RPC verification cost). The minter verifies the transaction via the SOL RPC canister and mints ckSOL to your account.
+
+### Withdrawal: ckSOL → SOL
+
+1. Call `icrc2_approve` on the ckSOL ledger, granting the minter an allowance.
+2. Call `withdraw` on the minter with a destination Solana address and amount in lamports. The minter burns ckSOL and signs a Solana transaction using threshold Ed25519.
+
+Track withdrawal progress with `withdrawal_status` using the burn block index returned from `withdraw`.
+
+For canister IDs and further details, see the [ckSOL repository](https://github.com/dfinity/cksol).
+
+## Transferring chain-key tokens
+
+All chain-key tokens are ICRC-1 tokens. Transfers work the same as any ICRC-1 transfer: call `icrc1_transfer` on the respective ledger. The only difference is the canister ID and the fee denomination.
+
+```bash
+# Check ckBTC balance (amount in satoshis)
+icp canister call mxzaz-hqaaa-aaaar-qaada-cai icrc1_balance_of \
+  '(record { owner = principal "YOUR-PRINCIPAL"; subaccount = null })' \
+  -n ic
+
+# Check ckBTC transfer fee (in satoshis)
+icp canister call mxzaz-hqaaa-aaaar-qaada-cai icrc1_fee '()' -n ic
+
+# Transfer ckBTC (amounts in satoshis; 1 BTC = 100,000,000 satoshis)
+icp canister call mxzaz-hqaaa-aaaar-qaada-cai icrc1_transfer \
+  '(record {
+    to = record { owner = principal "RECIPIENT-PRINCIPAL"; subaccount = null };
+    amount = 100_000 : nat;
+    fee = opt 10;
+    memo = null;
+    from_subaccount = null;
+    created_at_time = null;
+  })' -n ic
+```
+
+For Motoko and Rust transfer examples, see [Ledgers](ledgers.md): the code is identical to ICRC-1 transfers, just with the respective ledger canister ID and fee.
+
+## Per-user deposit addresses
+
+A backend canister serving multiple users needs each user to have a unique deposit address so that deposits can be credited to the correct account. The standard pattern: derive a 32-byte subaccount from the user's principal and pass it to the deposit call.
+
+For the derivation code (Motoko and Rust), see [Working with subaccounts](ledgers.md#working-with-subaccounts) in the Ledgers guide. The subaccount derivation is identical across all ICRC-1 assets.
+
+Pass the derived subaccount to the deposit call for each asset:
+
+- **ckBTC**: pass as the `subaccount` field in `get_btc_address`. Use the same `(owner, subaccount)` pair in `update_balance` to credit the correct account.
+- **ckETH / ckERC20**: encode as a `0x`-prefixed hex string and pass to `depositEth` or `depositErc20` on the Ethereum helper contract.
+- **ckDOGE**: pass as the `subaccount` field in `get_deposit_address`. Use the same pair in `update_balance` to credit the correct account.
+- **ckSOL**: pass as the `subaccount` field in `get_deposit_address`. Use the same pair in `process_deposit`.
+
+## Common pitfalls
+
+**Using the wrong minter canister ID.** The ckBTC minter is `mqygn-kiaaa-aaaar-qaadq-cai`. Do not confuse it with the ledger (`mxzaz-...`) or index (`n5wcd-...`). Calling `update_balance` or `get_btc_address` on the ledger will fail or return unexpected results.
+
+**Not calling `update_balance` after a BTC deposit.** The minter does not auto-detect deposits. After a user sends BTC to the deposit address, your application must call `update_balance` to trigger minting.
+
+**Forgetting the minimum withdrawal amount.** The ckBTC minter rejects withdrawals below 50,000 satoshis (0.0005 BTC) with `AmountTooLow`. Always validate the amount before calling `retrieve_btc_with_approval`.
+
+**Omitting the owner in `get_btc_address`.** If you omit `owner`, the minter uses the caller's principal (your canister principal), not the end user's principal. The resulting deposit address will credit your canister's default account rather than the user's subaccount.
+
+**Transfer fee pitfall.** The fee is deducted from the sender's account on top of the amount. If a user has exactly 1,000 satoshis and you transfer 1,000, the transfer fails with `InsufficientFunds`. Transfer `balance - fee` to send the full balance. Always query `icrc1_fee` at runtime rather than hardcoding. Each ledger uses its native unit: ckBTC uses satoshis (1 BTC = 100,000,000 satoshis), ckETH uses wei (1 ETH = 10¹⁸ wei), ckDOGE uses koinu (1 DOGE = 100,000,000 koinu).
+
+**Subaccount must be exactly 32 bytes.** Passing a shorter or longer subaccount causes a trap in the minter. Always pad to 32 bytes.
+
+**Depositing an unsupported ERC-20 token.** The ckETH helper contract does not enforce a token whitelist: funds sent for an unsupported token are lost. Always verify support via `get_minter_info` before any transfer.
+
+**Using an outdated ckETH helper contract address.** The helper contract address can change when the minter is upgraded. Always verify the current address via `get_minter_info` on the ckETH minter, checking `deposit_with_subaccount_helper_contract_address`.
+
+## Checking balances via CLI
+
+`icrc1_balance_of` works on any chain-key token ledger. Use the ckBTC ledger as an example:
+
+```bash
+icp canister call mxzaz-hqaaa-aaaar-qaada-cai icrc1_balance_of \
+  '(record { owner = principal "YOUR-PRINCIPAL"; subaccount = null })' \
+  -n ic
+```
+
+For canister IDs for all other chain-key tokens, see [Chain-Key Token Canister IDs](../../references/chain-key-canister-ids.md).
+
+## Next steps
+
+- [Ledgers](ledgers.md): transfer and manage digital assets, including all chain-key tokens
+- [Bitcoin integration](../chain-fusion/bitcoin.md): native BTC UTXO access and threshold signing
+- [Ethereum integration](../chain-fusion/ethereum.md): calling Ethereum contracts from ICP canisters
+- [Wallet integration](wallet-integration.md): add wallet signing to your app
+- [Digital Asset Standards](../../references/digital-asset-standards.md): formal ICRC standard specifications for fungible assets, NFTs, and their extensions
+
+{/* Upstream: informed by dfinity/icskills skills/ckbtc/SKILL.md; dfinity/icskills skills/icrc-ledger/SKILL.md; dfinity/portal docs/defi/chain-key-tokens/cketh/overview.mdx; dfinity/ic rs/ethereum/cketh/docs/cketh.adoc; dfinity/ic rs/ethereum/cketh/docs/ckerc20.adoc; dfinity/ic rs/bitcoin/ckbtc (ckBTC minter API); dfinity/ic rs/dogecoin/ckdoge (ckDOGE minter API and canister IDs); dfinity/cksol (ckSOL minter API and canister IDs) */}

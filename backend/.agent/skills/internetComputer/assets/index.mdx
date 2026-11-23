@@ -1,0 +1,46 @@
+---
+title: Build on the Internet Computer
+description: "Build tamperproof fullstack applications on the Internet Computer: no cloud vendor, no server patching, no security team required"
+template: splash
+hero:
+  title: "Create AIware software<br/>on network cloud"
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+<div class="skills-banner">
+
+## ICP skills for agents that write code
+
+Teach your AI coding agent the patterns, APIs, and deployment workflows it needs to build on ICP so it ships working code instead of guessing.
+
+<div class="skills-actions">
+<button class="skills-primary" id="skills-give-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span id="skills-give-label">Give your agent ICP skills</span></button>
+<a class="skills-cta" href="/guides/ai-coding-agents/"><span>Learn more</span><svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></a>
+</div>
+
+</div>
+
+<div class="landing-actions">
+  <a href="/getting-started/quickstart/" class="landing-action-card">Quickstart for craft coders</a>
+  <a href="https://icp.ninja/projects/hello-world" class="landing-action-card">Playground for craft coders</a>
+  <a href="/guides/" class="landing-action-card">Explore Guides</a>
+</div>
+
+## Documentation
+
+<CardGrid>
+  <LinkCard title="Guides" description="How-to guides for backends, frontends, auth, testing, deployment, and more." href="/guides/" />
+  <LinkCard title="Concepts" description="Developer-focused explanations of ICP architecture and design decisions." href="/concepts/" />
+  <LinkCard title="Languages" description="Language-specific guides for Rust and Motoko." href="/languages/" />
+  <LinkCard title="References" description="Specifications, canister IDs, cycle costs, and glossary." href="/references/" />
+</CardGrid>
+
+## External resources
+
+<CardGrid>
+  <LinkCard title="ICP CLI" description="Command-line tool for ICP development" href="https://cli.internetcomputer.org/1.6/" />
+  <LinkCard title="JS SDK" description="JavaScript/TypeScript libraries for ICP" href="https://js.icp.build" />
+  <LinkCard title="ICP Skills" description="Skills for agents that write code on ICP" href="https://skills.internetcomputer.org" />
+  <LinkCard title="Examples" description="Working Motoko and Rust canister examples" href="https://github.com/dfinity/examples" />
+</CardGrid>

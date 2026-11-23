@@ -1,0 +1,165 @@
+---
+title: "Getting started"
+description: "Add Internet Identity sign-in to a frontend with @icp-sdk/auth, call your backend as the signed-in user, and reject anonymous callers."
+sidebar:
+  order: 1
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Internet Identity (II) is the Internet Computer's sign-in. Users authenticate with a passkey, with a Google, Apple, or Microsoft account, or through their organization's SSO, and your app receives an identity it can call canisters with. This page adds sign-in to a frontend and checks the caller in a backend.
+
+## How it works
+
+Signing in opens a session at Internet Identity. The `AuthClient` from `@icp-sdk/auth` receives a **delegation** from that session: a short-lived key that may sign canister calls for the user, which the client replaces before it expires. Canisters see the user's **principal** as the caller.
+
+II derives a different principal for each app origin, so one person is a different user to `https://app-a.icp.net` and `https://app-b.icp.net`, and apps cannot correlate users across services. To keep one principal across several origins you control, see [Shared sessions across subdomains](shared-sessions.md#use-one-derivation-origin).
+
+## Install
+
+```bash
+npm install @icp-sdk/auth @icp-sdk/core
+```
+
+Install both together: each `@icp-sdk/auth` major peers a specific `@icp-sdk/core` major.
+
+## Sign in and sign out
+
+A client reads and writes the sign-in held in the browser's storage, not in the instance, so it is cheap: construct one where you need it and call `dispose()` when that page or component goes away. Without options, it signs in against mainnet Internet Identity:
+
+```javascript
+import { AuthClient } from "@icp-sdk/auth/client";
+
+const authClient = new AuthClient();
+
+async function signIn() {
+  try {
+    const identity = await authClient.signIn();
+    console.log("Signed in as", identity.getPrincipal().toText());
+  } catch (error) {
+    // The user closed the window, or authentication failed.
+    console.error("Sign-in failed:", error);
+  }
+}
+
+async function signOut() {
+  // Ends the session at Internet Identity, in every tab of this origin.
+  await authClient.signOut();
+}
+```
+
+`signIn()` accepts two optional bounds on the session, both in nanoseconds: `maxTimeToIdle`, after which an unused session ends, and `maxTimeToLive`, which it never outlives. Leave them unset unless your app has a policy of its own: Internet Identity then applies seven days of idleness and thirty days in total.
+
+## Render on the sign-in status
+
+`isAuthenticated()` answers whether this page can act as the user, synchronously. `getStatus()` answers in more detail, and `subscribe()` tells you when to read it again, including when another tab signs in or out:
+
+```javascript
+authClient.subscribe(() => render(authClient.getStatus()));
+render(authClient.getStatus());
+
+function render(status) {
+  switch (status.state) {
+    case "signed-in":
+      return showApp(status.principal);
+    case "expired":
+      // Still names the account: show "your session ended" rather than a bare sign-in screen.
+      return showSessionEnded(status.principal);
+    case "signed-in-elsewhere":
+      // Only reachable when sessions are shared across subdomains.
+      return showResume(status.principal);
+    case "signed-out":
+      return showSignInButton();
+  }
+}
+```
+
+`subscribe()` returns a function that stops the subscription; `dispose()` ends every subscription and listener the client holds, without signing out.
+
+## Call your backend as the user
+
+Pass the identity to an `HttpAgent`. The root key comes from the `ic_env` cookie that the frontend canister (or the Vite dev server) sets, so the same code runs locally and on mainnet:
+
+```javascript
+import { HttpAgent, Actor } from "@icp-sdk/core/agent";
+import { safeGetCanisterEnv } from "@icp-sdk/core/agent/canister-env";
+
+const canisterEnv = safeGetCanisterEnv();
+
+async function createActor(canisterId, idlFactory) {
+  const agent = await HttpAgent.create({
+    identity: await authClient.getIdentity(),
+    rootKey: canisterEnv?.IC_ROOT_KEY,
+  });
+  return Actor.createActor(idlFactory, { agent, canisterId });
+}
+```
+
+The backend reads the caller from the call itself (`msg.caller` in Motoko, `ic_cdk::api::msg_caller()` in Rust), so never pass the principal as an argument. An unauthenticated call arrives as the anonymous principal `2vxsx-fae`; reject it in protected methods:
+
+<Tabs syncKey="lang">
+<TabItem label="Motoko">
+
+```motoko
+import Principal "mo:core/Principal";
+import Runtime "mo:core/Runtime";
+
+persistent actor {
+  public shared ({ caller }) func protectedAction() : async Text {
+    if (Principal.isAnonymous(caller)) {
+      Runtime.trap("Anonymous principal not allowed.");
+    };
+    "Action performed by " # Principal.toText(caller)
+  };
+};
+```
+
+</TabItem>
+<TabItem label="Rust">
+
+```rust
+use candid::Principal;
+use ic_cdk::update;
+
+#[update]
+fn protected_action() -> String {
+    let caller = ic_cdk::api::msg_caller();
+    if caller == Principal::anonymous() {
+        ic_cdk::trap("Anonymous principal not allowed.");
+    }
+    format!("Action performed by {caller}")
+}
+```
+
+</TabItem>
+</Tabs>
+
+For role checks and other access-control patterns, see [Security best practices](../../concepts/security.md).
+
+## Develop locally
+
+The default client signs in against mainnet Internet Identity from a local network as well.
+{/* Needs human verification: that a local network started by icp-cli trusts delegations signed by mainnet Internet Identity (stated in the internet-identity IC skill, not found in the pinned icp-cli docs). */}
+For a fully local setup, add `ii: true` to the local network in `icp.yaml`, construct the client with `identityProvider: { authorizeUrl: "http://id.ai.localhost:8000/authorize", canisterId: "rdmx6-jaaaa-aaaaa-aaadq-cai" }`, and pass `agentOptions: { rootKey: canisterEnv?.IC_ROOT_KEY }` so the client accepts the local network's certificates.
+
+To call a protected method as anonymous from the command line:
+
+```bash
+icp canister call backend protectedAction --identity anonymous
+```
+
+## Common mistakes
+
+- **Not handling a rejected `signIn()`.** It rejects when the user closes the window or authentication fails. Without `await` and a `catch`, that failure is silently lost.
+- **Signing out on the delegation's expiry.** The delegation an identity signs with is short-lived and replaced for you, so a timer set from it ends the session after minutes. The session's end arrives as the `expired` status.
+- **Leaking clients.** Each client hooks browser listeners and schedules delegation refreshes; call `dispose()` when the view that made it goes away.
+- **Passing `identityProvider` as a URL string.** It is `{ authorizeUrl, canisterId }`, both required together, and only needed for a non-mainnet Internet Identity.
+- **Fetching the root key at runtime.** Use the `rootKey` from the `ic_env` cookie. `shouldFetchRootKey` or `fetchRootKey()` against mainnet lets a man-in-the-middle substitute the key.
+
+## Next steps
+
+- [App metadata](app-metadata.md): show your app's name and logo on the sign-in screen.
+- [Identity attributes](identity-attributes.md): receive a verified email or name with the sign-in.
+- [One-click sign-in](one-click-sign-in.md): send users straight to Google, Apple, Microsoft, or their organization's SSO.
+- [Shared sessions across subdomains](shared-sessions.md): sign in once across sibling subdomains, and keep one principal across your origins.
+- [`@icp-sdk/auth` API reference](https://js.icp.build/auth/latest/): every option and method.

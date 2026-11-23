@@ -115,6 +115,13 @@ ${name}:${index_key}"
       else
         target="$ROOT/frontend/.agent/$subpath/SKILL.md"
       fi
+    elif [[ "$link" == backend/* ]]; then
+      subpath="${link#backend/}"
+      if [[ -f "$ROOT/backend/.agent/skills/$subpath/SKILL.md" ]]; then
+        target="$ROOT/backend/.agent/skills/$subpath/SKILL.md"
+      else
+        target="$ROOT/backend/.agent/$subpath/SKILL.md"
+      fi
     else
       target="$SKILLS_ROOT/$link/SKILL.md"
     fi
@@ -131,8 +138,13 @@ done < <(find "$SKILLS_ROOT" -name 'SKILL.md' | sort)
 
 while IFS= read -r key; do
   [[ -n "$key" ]] || continue
-  target="$SKILLS_ROOT/$key/SKILL.md"
-  if [[ ! -f "$target" ]]; then
+  if [[ -f "$SKILLS_ROOT/$key/SKILL.md" ]]; then
+    continue
+  elif [[ -f "$ROOT/backend/.agent/skills/$key/SKILL.md" ]]; then
+    continue
+  elif [[ -f "$ROOT/frontend/.agent/skills/$key/SKILL.md" ]]; then
+    continue
+  else
     err "SKILLS.md indexes missing skill: $key"
   fi
 done <<< "$INDEXED_LIST"

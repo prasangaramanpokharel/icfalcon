@@ -1,0 +1,6 @@
+name: frontend
+build:
+  steps:
+    - type: script
+      commands:
+        - npm run build

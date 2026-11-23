@@ -148,6 +148,21 @@ falcon p:check --local
 falcon p:ship
 ```
 
+### Modern `icp-cli` Command Mapping
+
+IcFalcon is fully migrated to the modern **`icp-cli`** (`icp 1.8+`) toolchain, replacing legacy `dfx`:
+
+| Operation | Falcon Command | Native `icp-cli` Command | Config |
+|---|---|---|---|
+| **Build Canister** | `falcon b:build` | `icp build app` | `icp.yaml` / `canister.yaml` |
+| **Inspect Project** | `falcon project:show` | `icp project show` | `icp.yaml` |
+| **Deploy Local** | `falcon b:deploy --local` | `icp deploy app -e local` | `icp.yaml` |
+| **Deploy Mainnet** | `falcon b:deploy` | `icp deploy app -e ic` | `icp.yaml` |
+| **Local Network** | `falcon r:start --local` | `icp network start` | `icp.yaml` (`managed`) |
+| **Stop Network** | `falcon r:stop` | `icp network stop` | `icp.yaml` |
+| **Canister Call** | `falcon c:call <fn>` | `icp canister call app <fn>` | Candid `.did` |
+| **Canister Status** | `falcon c:status` | `icp canister status app` | Network state |
+
 ---
 
 ## 4. Invariants & Rules
@@ -163,6 +178,8 @@ falcon p:ship
 
 | Skill | Path |
 |---|---|
+| Master ICP Guide | [`backend/.agent/skills/internetComputer/SKILL.md`](../../../backend/.agent/skills/internetComputer/SKILL.md) |
+| Developer Tools Reference | [`backend/.agent/skills/internetComputer/assets/developer-tools/index.md`](../../../backend/.agent/skills/internetComputer/assets/developer-tools/index.md) |
 | Project Setup Guide | [`guideStandard/projectSetupStandard/SKILL.md`](../guideStandard/projectSetupStandard/SKILL.md) |
 | Local Deployment | [`guideStandard/localDeployStandard/SKILL.md`](../guideStandard/localDeployStandard/SKILL.md) |
 | Production Deployment | [`guideStandard/productionDeployStandard/SKILL.md`](../guideStandard/productionDeployStandard/SKILL.md) |

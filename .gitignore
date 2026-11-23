@@ -11,6 +11,8 @@ frontend/out/
 dist/
 backend/.dfx/
 .dfx/
+.icp/
+backend/.icp/
 .config/dfx/
 testing/
 # env & secrets

@@ -1,0 +1,1153 @@
+---
+title: "Bitcoin integration"
+description: "Send and receive BTC from ICP canisters using ckBTC or the direct Bitcoin API"
+sidebar:
+  order: 1
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+ICP provides a protocol-level integration with the Bitcoin network. Canisters can hold BTC, generate Bitcoin addresses, build transactions, sign them with threshold ECDSA or Schnorr signatures, and submit them to the Bitcoin network: all without bridges or oracles.
+
+There are two approaches to working with Bitcoin on ICP:
+
+- **ckBTC (chain-key Bitcoin)**: a 1:1 BTC-backed token native to ICP. Transfers settle in 1-2 seconds with a 10 satoshi fee. Best for most applications that need to accept, hold, or transfer Bitcoin value.
+- **Direct Bitcoin API**: call the Bitcoin canister to read UTXOs, get balances, and submit raw Bitcoin transactions. Best for advanced use cases that need full control over Bitcoin transactions (custom scripts, Ordinals, Runes, BRC-20).
+
+This guide covers both approaches.
+
+## ckBTC integration
+
+ckBTC is the recommended path for most developers. The ckBTC minter canister holds real BTC and mints/burns ckBTC tokens. Your canister interacts with the minter and ledger canisters using standard ICRC-1/ICRC-2 interfaces.
+
+### Canister IDs
+
+| Canister | Mainnet | Testnet4 |
+|---|---|---|
+| ckBTC Ledger | `mxzaz-hqaaa-aaaar-qaada-cai` | `mc6ru-gyaaa-aaaar-qaaaq-cai` |
+| ckBTC Minter | `mqygn-kiaaa-aaaar-qaadq-cai` | `ml52i-qqaaa-aaaar-qaaba-cai` |
+| ckBTC Index | `n5wcd-faaaa-aaaar-qaaea-cai` | `mm444-5iaaa-aaaar-qaabq-cai` |
+| ckBTC Checker | `oltsj-fqaaa-aaaar-qal5q-cai` | - |
+
+### Deposit flow (BTC to ckBTC)
+
+For a flow diagram, see [Bitcoin integration](../../concepts/chain-fusion/bitcoin.md#converting-btc-to-ckbtc).
+
+1. Call `get_btc_address` on the minter with the user's principal and subaccount. This returns a unique Bitcoin address controlled by the minter via threshold ECDSA.
+2. Send BTC to that address from any Bitcoin wallet.
+3. Wait for 4 Bitcoin confirmations (mainnet). The minter will not process UTXOs until the required number of confirmations is reached.
+4. Call `update_balance` on the minter. The minter checks for new UTXOs, runs a KYT (Know-Your-Transaction) compliance check via the Bitcoin Checker canister, and mints ckBTC to the user's ICRC-1 account. A KYT fee of 100 satoshis is deducted per UTXO. UTXOs that fail the KYT check are quarantined and not minted.
+
+<Tabs syncKey="lang">
+<TabItem label="Motoko">
+
+```motoko
+import Principal "mo:core/Principal";
+import Blob "mo:core/Blob";
+import Nat8 "mo:core/Nat8";
+import Array "mo:core/Array";
+import Runtime "mo:core/Runtime";
+import Nat "mo:core/Nat";
+
+persistent actor Self {
+
+  type Account = { owner : Principal; subaccount : ?Blob };
+  type UpdateBalanceResult = { #Ok : [UtxoStatus]; #Err : UpdateBalanceError };
+  // See the full example for UtxoStatus and UpdateBalanceError definitions
+
+  transient let ckbtcMinter : actor {
+    get_btc_address : shared ({ owner : ?Principal; subaccount : ?Blob }) -> async Text;
+    update_balance : shared ({ owner : ?Principal; subaccount : ?Blob }) -> async UpdateBalanceResult;
+  } = actor "mqygn-kiaaa-aaaar-qaadq-cai";
+
+  func principalToSubaccount(p : Principal) : Blob {
+    let bytes = Blob.toArray(Principal.toBlob(p));
+    let size = bytes.size();
+    let sub = Array.tabulate<Nat8>(32, func(i : Nat) : Nat8 {
+      if (i == 0) { Nat.toNat8(size) }
+      else if (i <= size) { bytes[i - 1] }
+      else { 0 }
+    });
+    Array.toBlob(sub)
+  };
+
+  public shared ({ caller }) func getDepositAddress() : async Text {
+    if (Principal.isAnonymous(caller)) { Runtime.trap("Authentication required") };
+    let subaccount = principalToSubaccount(caller);
+    await ckbtcMinter.get_btc_address({
+      owner = ?Principal.fromActor(Self);
+      subaccount = ?subaccount;
+    })
+  };
+
+  public shared ({ caller }) func updateBalance() : async UpdateBalanceResult {
+    if (Principal.isAnonymous(caller)) { Runtime.trap("Authentication required") };
+    let subaccount = principalToSubaccount(caller);
+    await ckbtcMinter.update_balance({
+      owner = ?Principal.fromActor(Self);
+      subaccount = ?subaccount;
+    })
+  };
+};
+```
+
+</TabItem>
+<TabItem label="Rust">
+
+```rust
+use candid::{CandidType, Deserialize, Principal};
+use ic_cdk::update;
+use ic_cdk::call::Call;
+
+const CKBTC_MINTER: &str = "mqygn-kiaaa-aaaar-qaadq-cai";
+
+#[derive(CandidType, Deserialize)]
+struct GetBtcAddressArgs {
+    owner: Option<Principal>,
+    subaccount: Option<Vec<u8>>,
+}
+
+fn principal_to_subaccount(principal: &Principal) -> [u8; 32] {
+    let mut subaccount = [0u8; 32];
+    let principal_bytes = principal.as_slice();
+    subaccount[0] = principal_bytes.len() as u8;
+    subaccount[1..1 + principal_bytes.len()].copy_from_slice(principal_bytes);
+    subaccount
+}
+
+fn minter_id() -> Principal {
+    Principal::from_text(CKBTC_MINTER).unwrap()
+}
+
+#[update]
+async fn get_deposit_address() -> String {
+    let caller = ic_cdk::api::msg_caller();
+    assert_ne!(caller, Principal::anonymous(), "Authentication required");
+
+    let subaccount = principal_to_subaccount(&caller);
+    let args = GetBtcAddressArgs {
+        owner: Some(ic_cdk::api::canister_self()),
+        subaccount: Some(subaccount.to_vec()),
+    };
+
+    let (address,): (String,) = Call::unbounded_wait(minter_id(), "get_btc_address")
+        .with_arg(args)
+        .await
+        .expect("Failed to get BTC address")
+        .candid_tuple()
+        .expect("Failed to decode response");
+
+    address
+}
+```
+
+</TabItem>
+</Tabs>
+
+### Transfer ckBTC
+
+Call `icrc1_transfer` on the ckBTC ledger. The fee is 10 satoshis and transfers settle in 1-2 seconds.
+
+<Tabs syncKey="lang">
+<TabItem label="Motoko">
+
+```motoko
+// Inside your persistent actor:
+
+type TransferArgs = {
+  from_subaccount : ?Blob;
+  to : Account;
+  amount : Nat;
+  fee : ?Nat;
+  memo : ?Blob;
+  created_at_time : ?Nat64;
+};
+
+type TransferResult = { #Ok : Nat; #Err : TransferError };
+// See the full example for TransferError definition
+
+transient let ckbtcLedger : actor {
+  icrc1_transfer : shared (TransferArgs) -> async TransferResult;
+} = actor "mxzaz-hqaaa-aaaar-qaada-cai";
+
+public shared ({ caller }) func transfer(to : Principal, amount : Nat) : async TransferResult {
+  if (Principal.isAnonymous(caller)) { Runtime.trap("Authentication required") };
+  let fromSubaccount = principalToSubaccount(caller);
+  await ckbtcLedger.icrc1_transfer({
+    from_subaccount = ?fromSubaccount;
+    to = { owner = to; subaccount = null };
+    amount = amount;
+    fee = ?10;
+    memo = null;
+    created_at_time = null;
+  })
+};
+```
+
+</TabItem>
+<TabItem label="Rust">
+
+```rust
+use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
+use candid::Nat;
+
+const CKBTC_LEDGER: &str = "mxzaz-hqaaa-aaaar-qaada-cai";
+
+fn ledger_id() -> Principal {
+    Principal::from_text(CKBTC_LEDGER).unwrap()
+}
+
+#[update]
+async fn transfer(to: Principal, amount: Nat) -> Result<Nat, TransferError> {
+    let caller = ic_cdk::api::msg_caller();
+    assert_ne!(caller, Principal::anonymous(), "Authentication required");
+
+    let from_subaccount = principal_to_subaccount(&caller);
+    let args = TransferArg {
+        from_subaccount: Some(from_subaccount),
+        to: Account { owner: to, subaccount: None },
+        amount,
+        fee: Some(Nat::from(10u64)),
+        memo: None,
+        created_at_time: None,
+    };
+
+    let (result,): (Result<Nat, TransferError>,) =
+        Call::unbounded_wait(ledger_id(), "icrc1_transfer")
+            .with_arg(args)
+            .await
+            .expect("Failed to call icrc1_transfer")
+            .candid_tuple()
+            .expect("Failed to decode response");
+
+    result
+}
+```
+
+</TabItem>
+</Tabs>
+
+### Withdraw (ckBTC to BTC)
+
+For a flow diagram, see [Bitcoin integration](../../concepts/chain-fusion/bitcoin.md#converting-ckbtc-to-btc).
+
+Withdrawal is a two-step process: approve the minter to spend your ckBTC, then call `retrieve_btc_with_approval`. Before burning ckBTC, the minter runs a KYT check on the destination Bitcoin address. The Bitcoin transaction is submitted asynchronously: the minter batches pending requests to optimize miner fees. Track status with `retrieve_btc_status_v2(block_index)`. The minimum withdrawal is 50,000 satoshis (0.0005 BTC).
+
+<Tabs syncKey="lang">
+<TabItem label="Motoko">
+
+```motoko
+// Inside your persistent actor:
+
+type ApproveArgs = {
+  from_subaccount : ?Blob;
+  spender : Account;
+  amount : Nat;
+  expected_allowance : ?Nat;
+  expires_at : ?Nat64;
+  fee : ?Nat;
+  memo : ?Blob;
+  created_at_time : ?Nat64;
+};
+
+type ApproveError = {
+  #BadFee : { expected_fee : Nat };
+  #InsufficientFunds : { balance : Nat };
+  #AllowanceChanged : { current_allowance : Nat };
+  #Expired : { ledger_time : Nat64 };
+  #TooOld;
+  #CreatedInFuture : { ledger_time : Nat64 };
+  #Duplicate : { duplicate_of : Nat };
+  #TemporarilyUnavailable;
+  #GenericError : { error_code : Nat; message : Text };
+};
+
+type RetrieveBtcWithApprovalArgs = {
+  address : Text;
+  amount : Nat64;
+  from_subaccount : ?Blob;
+};
+
+type RetrieveBtcResult = {
+  #Ok : { block_index : Nat64 };
+  #Err : RetrieveBtcError;
+};
+
+// See the full example for RetrieveBtcError definition
+
+public shared ({ caller }) func withdraw(btcAddress : Text, amount : Nat64) : async RetrieveBtcResult {
+  if (Principal.isAnonymous(caller)) { Runtime.trap("Authentication required") };
+
+  let fromSubaccount = principalToSubaccount(caller);
+  let approveResult = await ckbtcLedger.icrc2_approve({
+    from_subaccount = ?fromSubaccount;
+    spender = {
+      owner = Principal.fromText("mqygn-kiaaa-aaaar-qaadq-cai");
+      subaccount = null;
+    };
+    amount = Nat64.toNat(amount) + 10;
+    expected_allowance = null;
+    expires_at = null;
+    fee = ?10;
+    memo = null;
+    created_at_time = null;
+  });
+
+  switch (approveResult) {
+    case (#Err(_)) {
+      return #Err(#GenericError({ error_code = 0; error_message = "Approve failed" }))
+    };
+    case (#Ok(_)) {};
+  };
+
+  await ckbtcMinter.retrieve_btc_with_approval({
+    address = btcAddress;
+    amount = amount;
+    from_subaccount = ?fromSubaccount;
+  })
+};
+```
+
+</TabItem>
+<TabItem label="Rust">
+
+```rust
+use icrc_ledger_types::icrc2::approve::{ApproveArgs, ApproveError};
+
+#[derive(CandidType, Deserialize)]
+struct RetrieveBtcWithApprovalArgs {
+    address: String,
+    amount: u64,
+    from_subaccount: Option<Vec<u8>>,
+}
+
+#[derive(CandidType, Deserialize)]
+struct RetrieveBtcOk { block_index: u64 }
+
+#[derive(CandidType, Deserialize, Debug)]
+enum RetrieveBtcError {
+    MalformedAddress(String),
+    AlreadyProcessing,
+    AmountTooLow(u64),
+    InsufficientFunds { balance: u64 },
+    InsufficientAllowance { allowance: u64 },
+    TemporarilyUnavailable(String),
+    GenericError { error_code: u64, error_message: String },
+}
+
+type RetrieveBtcResult = Result<RetrieveBtcOk, RetrieveBtcError>;
+
+#[update]
+async fn withdraw(btc_address: String, amount: u64) -> RetrieveBtcResult {
+    let caller = ic_cdk::api::msg_caller();
+    assert_ne!(caller, Principal::anonymous(), "Authentication required");
+
+    // Step 1: Approve the minter to spend ckBTC
+    let from_subaccount = principal_to_subaccount(&caller);
+    let approve_args = ApproveArgs {
+        from_subaccount: Some(from_subaccount),
+        spender: Account { owner: minter_id(), subaccount: None },
+        amount: Nat::from(amount) + Nat::from(10u64), // +10 covers the ICRC-2 transfer fee the minter charges when moving your ckBTC
+        expected_allowance: None,
+        expires_at: None,
+        fee: Some(Nat::from(10u64)),
+        memo: None,
+        created_at_time: None,
+    };
+
+    let (approve_result,): (Result<Nat, ApproveError>,) =
+        Call::unbounded_wait(ledger_id(), "icrc2_approve")
+            .with_arg(approve_args)
+            .await
+            .expect("Failed to call icrc2_approve")
+            .candid_tuple()
+            .expect("Failed to decode response");
+
+    if let Err(e) = approve_result {
+        return Err(RetrieveBtcError::GenericError {
+            error_code: 0,
+            error_message: format!("Approve failed: {:?}", e),
+        });
+    }
+
+    // Step 2: Request BTC withdrawal
+    let args = RetrieveBtcWithApprovalArgs {
+        address: btc_address,
+        amount,
+        from_subaccount: Some(from_subaccount.to_vec()),
+    };
+
+    let (result,): (RetrieveBtcResult,) =
+        Call::unbounded_wait(minter_id(), "retrieve_btc_with_approval")
+            .with_arg(args)
+            .await
+            .expect("Failed to call retrieve_btc_with_approval")
+            .candid_tuple()
+            .expect("Failed to decode response");
+
+    result
+}
+```
+
+</TabItem>
+</Tabs>
+
+### Deposit, mint, and transfer (icp-cli)
+
+This walkthrough covers the full ckBTC deposit flow: getting a deposit address, checking the confirmation requirement, minting ckBTC, and transferring to another principal.
+
+First, export your principal from your active identity (every command below reuses it):
+
+```bash
+export MY_PRINCIPAL=$(icp identity principal)
+```
+
+**Step 1: Get a deposit address**
+
+```bash
+icp canister call mqygn-kiaaa-aaaar-qaadq-cai get_btc_address \
+  "(record { owner = opt principal \"$MY_PRINCIPAL\"; subaccount = null })" \
+  -n ic
+```
+
+Send BTC to the returned address from any Bitcoin wallet.
+
+**Step 2: Check the confirmation requirement**
+
+The minter does not mint ckBTC until the depositing Bitcoin transaction reaches a minimum number of confirmations. Query the current threshold before waiting:
+
+```bash
+icp canister call mqygn-kiaaa-aaaar-qaadq-cai get_minter_info '()' -n ic
+```
+
+The response includes `min_confirmations` (how many Bitcoin confirmations are required before minting, currently 4 on mainnet), `kyt_fee` (the know-your-transaction check fee charged per deposit, in satoshis), and `retrieve_btc_min_amount` (the minimum withdrawal amount, currently 50,000 satoshis).
+
+**Step 3: Mint ckBTC**
+
+Once the Bitcoin transaction has the required confirmations, call `update_balance` to trigger minting:
+
+```bash
+icp canister call mqygn-kiaaa-aaaar-qaadq-cai update_balance \
+  "(record { owner = opt principal \"$MY_PRINCIPAL\"; subaccount = null })" \
+  -n ic
+```
+
+A `Minted` record in the response confirms that ckBTC was credited to your account. If the response is `Err(NoNewUtxos { current_confirmations = opt N })`, the transaction exists but has not yet reached the required count.
+
+**Step 4: Check your balance**
+
+```bash
+icp canister call mxzaz-hqaaa-aaaar-qaada-cai icrc1_balance_of \
+  "(record { owner = principal \"$MY_PRINCIPAL\"; subaccount = null })" \
+  -n ic
+```
+
+**Step 5: Transfer ckBTC**
+
+Set the recipient principal: `export RECIPIENT="<paste-recipient-principal>"`. The 10 satoshi fee is charged in addition to the `amount`.
+
+```bash
+icp canister call mxzaz-hqaaa-aaaar-qaada-cai icrc1_transfer \
+  "(record {
+    to = record { owner = principal \"$RECIPIENT\"; subaccount = null };
+    amount = 100_000;
+    fee = opt 10;
+    memo = null;
+    from_subaccount = null;
+    created_at_time = null;
+  })" -n ic
+```
+
+`created_at_time = null` skips deduplication: if you run this command twice, both transfers execute. In production canister code, set this field to the current nanosecond timestamp so that retried calls are rejected as duplicates rather than sending twice. See [Transaction deduplication](../digital-assets/ledgers.md#transaction-deduplication) for details.
+
+### Common mistakes
+
+- **Not calling `update_balance` after a BTC deposit.** The minter does not auto-detect deposits. Your application must call `update_balance` to trigger minting.
+- **Forgetting the 10 satoshi transfer fee.** If a user has exactly 1000 satoshis and you transfer 1000, it fails with `InsufficientFunds`. Transfer `balance - 10` instead.
+- **Using AccountIdentifier instead of ICRC-1 Account.** ckBTC uses the ICRC-1 standard: `{ owner: Principal, subaccount: ?Blob }`. Do not use the legacy `AccountIdentifier` (hex string) from the ICP ledger.
+- **Subaccount must be exactly 32 bytes or null.** A subaccount shorter or longer than 32 bytes causes a trap.
+- **Minimum withdrawal is 50,000 satoshis.** Amounts below this return `AmountTooLow`.
+- **Omitting `owner` in `get_btc_address`.** Without `owner`, the minter returns the deposit address of the calling canister instead of the intended user.
+
+For a complete working example with all type definitions and error handling, see the [ckBTC skill](https://skills.internetcomputer.org/skills/ckbtc/) or the full code in the [basic_bitcoin Motoko example](https://github.com/dfinity/examples/tree/master/motoko/basic_bitcoin) and [basic_bitcoin Rust example](https://github.com/dfinity/examples/tree/master/rust/basic_bitcoin).
+
+## Direct Bitcoin API
+
+For use cases that require full control over Bitcoin transactions (custom scripts, Ordinals, Runes, BRC-20), you can call the Bitcoin canister directly. This involves generating addresses with threshold ECDSA or Schnorr signatures, building raw transactions, and submitting them to the Bitcoin network.
+
+### Bitcoin API canister IDs
+
+| IC network | Bitcoin network | Canister ID |
+|---|---|---|
+| Local (PocketIC) | regtest | `g4xu7-jiaaa-aaaan-aaaaq-cai` |
+| IC mainnet | testnet4 | `g4xu7-jiaaa-aaaan-aaaaq-cai` |
+| IC mainnet | mainnet | `ghsi2-tqaaa-aaaan-aaaca-cai` |
+
+### Available endpoints
+
+The Bitcoin canister exposes these methods:
+
+- `bitcoin_get_balance`: returns the balance of a Bitcoin address in satoshis
+- `bitcoin_get_utxos`: returns unspent transaction outputs for an address
+- `bitcoin_get_current_fee_percentiles`: returns fee percentiles from recent transactions
+- `bitcoin_get_block_headers`: returns raw block headers for a height range
+- `bitcoin_send_transaction`: submits a signed transaction to the Bitcoin network
+- `get_blockchain_info`: returns chain state (tip height, block hash, timestamp, difficulty, UTXO count)
+
+Signing uses threshold key derivation provided by the management canister:
+
+- `ecdsa_public_key` / `sign_with_ecdsa`: P2PKH, P2SH, and P2WPKH addresses
+- `schnorr_public_key` / `sign_with_schnorr`: Taproot (P2TR) addresses
+
+All calls require cycles (see [Cycle costs](#cycle-costs)). The `ic-cdk-bitcoin-canister` crate handles them automatically in Rust; in Motoko attach cycles explicitly with `(with cycles = amount)`.
+
+### Read Bitcoin balance
+
+<Tabs syncKey="lang">
+<TabItem label="Motoko">
+
+```motoko
+import Runtime "mo:core/Runtime";
+import Text "mo:core/Text";
+
+persistent actor Backend {
+  public type Satoshi = Nat64;
+  public type BitcoinAddress = Text;
+  public type Network = { #mainnet; #testnet; #regtest };
+
+  type BitcoinCanister = actor {
+    bitcoin_get_balance : shared {
+      address : BitcoinAddress;
+      network : Network;
+      min_confirmations : ?Nat32;
+    } -> async Satoshi;
+  };
+
+  // <system> capability is required to access Runtime.envVar (reads environment variables at runtime)
+  private func getNetwork<system>() : Network {
+    switch (Runtime.envVar("BITCOIN_NETWORK")) {
+      case (?value) {
+        switch (Text.toLower(value)) {
+          case ("mainnet") #mainnet;
+          case ("testnet") #testnet;
+          case _ #regtest;
+        };
+      };
+      case null #regtest;
+    };
+  };
+
+  private func getBitcoinCanisterId(network : Network) : Text {
+    switch (network) {
+      case (#mainnet) "ghsi2-tqaaa-aaaan-aaaca-cai";
+      case _ "g4xu7-jiaaa-aaaan-aaaaq-cai";
+    };
+  };
+
+  private func getBalanceCost(network : Network) : Nat {
+    switch (network) {
+      case (#mainnet) 100_000_000;
+      case _ 40_000_000;
+    };
+  };
+
+  public func get_balance(address : BitcoinAddress) : async Satoshi {
+    let network = getNetwork();
+    await (with cycles = getBalanceCost(network))
+      (actor (getBitcoinCanisterId(network)) : BitcoinCanister)
+        .bitcoin_get_balance({
+          address;
+          network;
+          min_confirmations = null;
+        });
+  };
+};
+```
+
+</TabItem>
+<TabItem label="Rust">
+
+```rust
+use ic_cdk_bitcoin_canister::{
+    bitcoin_get_balance, GetBalanceRequest, Network, Satoshi,
+};
+
+fn get_network() -> Network {
+    let network_str = if ic_cdk::api::env_var_name_exists("BITCOIN_NETWORK") {
+        ic_cdk::api::env_var_value("BITCOIN_NETWORK").to_lowercase()
+    } else {
+        "regtest".to_string()
+    };
+
+    match network_str.as_str() {
+        "mainnet" => Network::Mainnet,
+        "testnet" => Network::Testnet,
+        _ => Network::Regtest,
+    }
+}
+
+#[ic_cdk::update]
+async fn get_balance(address: String) -> Satoshi {
+    bitcoin_get_balance(&GetBalanceRequest {
+        address,
+        network: get_network(),
+        min_confirmations: None,
+    })
+    .await
+    .expect("Failed to get balance")
+}
+```
+
+</TabItem>
+</Tabs>
+
+### Read UTXOs
+
+<Tabs syncKey="lang">
+<TabItem label="Motoko">
+
+```motoko
+import Runtime "mo:core/Runtime";
+import Text "mo:core/Text";
+
+persistent actor Backend {
+  public type Satoshi = Nat64;
+  public type Network = { #mainnet; #testnet; #regtest };
+
+  type OutPoint = { txid : Blob; vout : Nat32 };
+  type Utxo = { outpoint : OutPoint; value : Satoshi; height : Nat32 };
+  type GetUtxosResponse = {
+    utxos : [Utxo];
+    tip_block_hash : Blob;
+    tip_height : Nat32;
+    next_page : ?Blob;
+  };
+
+  type BitcoinCanister = actor {
+    bitcoin_get_utxos : shared {
+      address : Text;
+      network : Network;
+      filter : ?{ #min_confirmations : Nat32; #page : Blob };
+    } -> async GetUtxosResponse;
+  };
+
+  // <system> capability is required to access Runtime.envVar (reads environment variables at runtime)
+  private func getNetwork<system>() : Network {
+    switch (Runtime.envVar("BITCOIN_NETWORK")) {
+      case (?value) {
+        switch (Text.toLower(value)) {
+          case ("mainnet") #mainnet;
+          case ("testnet") #testnet;
+          case _ #regtest;
+        };
+      };
+      case null #regtest;
+    };
+  };
+
+  private func getBitcoinCanisterId(network : Network) : Text {
+    switch (network) {
+      case (#mainnet) "ghsi2-tqaaa-aaaan-aaaca-cai";
+      case _ "g4xu7-jiaaa-aaaan-aaaaq-cai";
+    };
+  };
+
+  private func getUtxosCost(network : Network) : Nat {
+    switch (network) {
+      case (#mainnet) 10_000_000_000;
+      case _ 4_000_000_000;
+    };
+  };
+
+  public func get_utxos(address : Text) : async GetUtxosResponse {
+    let network = getNetwork();
+    await (with cycles = getUtxosCost(network))
+      (actor (getBitcoinCanisterId(network)) : BitcoinCanister)
+        .bitcoin_get_utxos({
+          address;
+          network;
+          filter = null;
+        });
+  };
+};
+```
+
+</TabItem>
+<TabItem label="Rust">
+
+```rust
+use ic_cdk_bitcoin_canister::{bitcoin_get_utxos, GetUtxosRequest, GetUtxosResponse};
+
+#[ic_cdk::update]
+async fn get_utxos(address: String) -> GetUtxosResponse {
+    bitcoin_get_utxos(&GetUtxosRequest {
+        address,
+        network: get_network(),
+        filter: None,
+    })
+    .await
+    .expect("Failed to get UTXOs")
+}
+```
+
+</TabItem>
+</Tabs>
+
+`bitcoin_get_utxos` returns a `next_page` field. If non-null, the address has more UTXOs than fit in one response: call again with `filter = ?#page(next_page)` (Motoko) or `filter: Some(UtxosFilter::Page(next_page))` (Rust) until `next_page` is null.
+
+### Get fee percentiles
+
+Fee percentiles are measured in millisatoshi per vbyte (1,000 msat = 1 satoshi). The 50th percentile gives a reasonable median confirmation target. On regtest there are no transactions, so the response is empty: use a fallback.
+
+<Tabs syncKey="lang">
+<TabItem label="Motoko">
+
+```motoko
+import Runtime "mo:core/Runtime";
+import Text "mo:core/Text";
+
+persistent actor Backend {
+  public type Network = { #mainnet; #testnet; #regtest };
+
+  type BitcoinCanister = actor {
+    bitcoin_get_current_fee_percentiles : shared {
+      network : Network;
+    } -> async [Nat64];
+  };
+
+  // <system> capability is required to access Runtime.envVar (reads environment variables at runtime)
+  private func getNetwork<system>() : Network {
+    switch (Runtime.envVar("BITCOIN_NETWORK")) {
+      case (?value) {
+        switch (Text.toLower(value)) {
+          case ("mainnet") #mainnet;
+          case ("testnet") #testnet;
+          case _ #regtest;
+        };
+      };
+      case null #regtest;
+    };
+  };
+
+  private func getBitcoinCanisterId(network : Network) : Text {
+    switch (network) {
+      case (#mainnet) "ghsi2-tqaaa-aaaan-aaaca-cai";
+      case _ "g4xu7-jiaaa-aaaan-aaaaq-cai";
+    };
+  };
+
+  private func getFeePercentilesCost(network : Network) : Nat {
+    switch (network) {
+      case (#mainnet) 100_000_000;
+      case _ 40_000_000;
+    };
+  };
+
+  public func get_fee_per_byte() : async Nat64 {
+    let network = getNetwork();
+    let percentiles = await (with cycles = getFeePercentilesCost(network))
+      (actor (getBitcoinCanisterId(network)) : BitcoinCanister)
+        .bitcoin_get_current_fee_percentiles({ network });
+    if (percentiles.size() == 0) {
+      2_000 // regtest fallback: 2 sat/vB in millisatoshi
+    } else {
+      percentiles[50]
+    }
+  };
+};
+```
+
+</TabItem>
+<TabItem label="Rust">
+
+```rust
+use ic_cdk_bitcoin_canister::{
+    bitcoin_get_current_fee_percentiles, GetCurrentFeePercentilesRequest, MillisatoshiPerByte,
+};
+
+async fn get_fee_per_byte(network: Network) -> MillisatoshiPerByte {
+    let percentiles = bitcoin_get_current_fee_percentiles(
+        &GetCurrentFeePercentilesRequest { network: network.into() },
+    )
+    .await
+    .expect("Failed to get fee percentiles");
+
+    if percentiles.is_empty() {
+        2_000 // regtest fallback: 2 sat/vB in millisatoshi
+    } else {
+        percentiles[50]
+    }
+}
+```
+
+</TabItem>
+</Tabs>
+
+### Blockchain info
+
+`get_blockchain_info()` queries the state of the Bitcoin chain. The response includes:
+
+| Field | Type | Description |
+|---|---|---|
+| `height` | `nat32` | Current chain tip block height |
+| `block_hash` | `blob` | Chain tip block hash |
+| `timestamp` | `nat32` | Unix timestamp of the tip block |
+| `difficulty` | `nat` | Current mining difficulty target |
+| `utxos_length` | `nat64` | Total number of UTXOs in the UTXO set |
+
+<Tabs syncKey="lang">
+<TabItem label="Motoko">
+
+```motoko
+import Runtime "mo:core/Runtime";
+import Text "mo:core/Text";
+
+persistent actor Backend {
+  public type Network = { #mainnet; #testnet; #regtest };
+
+  type BlockchainInfo = {
+    height : Nat32;
+    block_hash : Blob;
+    timestamp : Nat32;
+    difficulty : Nat;
+    utxos_length : Nat64;
+  };
+
+  type BitcoinCanister = actor {
+    get_blockchain_info : shared () -> async BlockchainInfo;
+  };
+
+  // <system> capability is required to access Runtime.envVar (reads environment variables at runtime)
+  private func getNetwork<system>() : Network {
+    switch (Runtime.envVar("BITCOIN_NETWORK")) {
+      case (?value) {
+        switch (Text.toLower(value)) {
+          case ("mainnet") #mainnet;
+          case ("testnet") #testnet;
+          case _ #regtest;
+        };
+      };
+      case null #regtest;
+    };
+  };
+
+  private func getBitcoinCanisterId(network : Network) : Text {
+    switch (network) {
+      case (#mainnet) "ghsi2-tqaaa-aaaan-aaaca-cai";
+      case _ "g4xu7-jiaaa-aaaan-aaaaq-cai";
+    };
+  };
+
+  private func getBlockchainInfoCost(network : Network) : Nat {
+    switch (network) {
+      case (#mainnet) 100_000_000;
+      case _ 40_000_000;
+    };
+  };
+
+  public func get_blockchain_info() : async BlockchainInfo {
+    let network = getNetwork();
+    await (with cycles = getBlockchainInfoCost(network))
+      (actor (getBitcoinCanisterId(network)) : BitcoinCanister)
+        .get_blockchain_info();
+  };
+};
+```
+
+</TabItem>
+<TabItem label="Rust">
+
+```rust
+use ic_cdk_bitcoin_canister::{get_blockchain_info, BlockchainInfo, Network};
+
+fn get_network() -> Network {
+    let network_str = if ic_cdk::api::env_var_name_exists("BITCOIN_NETWORK") {
+        ic_cdk::api::env_var_value("BITCOIN_NETWORK").to_lowercase()
+    } else {
+        "regtest".to_string()
+    };
+
+    match network_str.as_str() {
+        "mainnet" => Network::Mainnet,
+        "testnet" => Network::Testnet,
+        _ => Network::Regtest,
+    }
+}
+
+#[ic_cdk::update]
+async fn get_blockchain_info_handler() -> BlockchainInfo {
+    get_blockchain_info(get_network())
+        .await
+        .expect("Failed to get blockchain info")
+}
+```
+
+Add to `Cargo.toml` alongside `ic-cdk`:
+
+```toml
+ic-cdk-bitcoin-canister = "0.2"
+```
+
+</TabItem>
+</Tabs>
+
+Full implementation: [basic_bitcoin example (Rust)](https://github.com/dfinity/examples/tree/master/rust/basic_bitcoin), `src/service/get_blockchain_info.rs`.
+
+### Developer workflow
+
+Building a full Bitcoin transaction flow involves these steps:
+
+1. **Generate a Bitcoin address** from a threshold ECDSA or Schnorr public key
+2. **Read UTXOs** for the address using `bitcoin_get_utxos`
+3. **Select UTXOs and calculate the fee** (see [UTXO selection](#utxo-selection) below)
+4. **Build the unsigned transaction** from the selected UTXOs, recipient output, and change output
+5. **Sign each input** using `sign_with_ecdsa` or `sign_with_schnorr`
+6. **Submit the transaction** using `bitcoin_send_transaction`
+
+Address generation, transaction construction, signing, and submission together exceed 30 lines per language. See these working examples for the full flow:
+
+- [basic_bitcoin (Motoko)](https://github.com/dfinity/examples/tree/master/motoko/basic_bitcoin): full send/receive with ECDSA and Schnorr
+- [basic_bitcoin (Rust)](https://github.com/dfinity/examples/tree/master/rust/basic_bitcoin): full send/receive with ECDSA and Schnorr
+- [threshold-ecdsa (Motoko)](https://github.com/dfinity/examples/tree/master/motoko/threshold-ecdsa): ECDSA signing
+
+### UTXO selection
+
+Transaction fee depends on transaction size in bytes, which depends on the number of inputs, which depends on which UTXOs are selected. Because fee and input count are mutually dependent, the calculation is iterative: start with fee=0, select UTXOs to cover `amount + 0`, estimate the signed transaction size with a mock signer, recalculate fee, repeat until the fee stabilises.
+
+Two selection strategies cover the common cases:
+
+**Greedy (standard payments):** accumulate UTXOs oldest-first until the total covers `amount + fee`. Consolidates old UTXOs and reduces wallet fragmentation over time.
+
+**Single UTXO (Ordinals, Runes, BRC-20):** find the first UTXO that alone covers `amount + fee`. Required when the asset is inscribed on a specific satoshi; spending multiple UTXOs risks accidentally burning the inscription.
+
+<Tabs syncKey="lang">
+<TabItem label="Motoko">
+
+```motoko
+import Array "mo:core/Array";
+import Runtime "mo:core/Runtime";
+
+type Utxo = { outpoint : { txid : Blob; vout : Nat32 }; value : Nat64; height : Nat32 };
+
+// Greedy: accumulate oldest-first until covering amount + fee.
+// Use for standard payments.
+func selectUtxosGreedy(utxos : [Utxo], amount : Nat64, fee : Nat64) : [Utxo] {
+  var selected : [Utxo] = [];
+  var total : Nat64 = 0;
+  label done for (utxo in Array.reverse(utxos).values()) {
+    selected := Array.concat(selected, [utxo]);
+    total += utxo.value;
+    if (total >= amount + fee) break done;
+  };
+  if (total < amount + fee) Runtime.trap("Insufficient balance");
+  selected
+};
+
+// Single UTXO: find one that alone covers amount + fee.
+// Use for Ordinals, Runes, and BRC-20 where the asset is tied to a specific satoshi.
+func selectOneUtxo(utxos : [Utxo], amount : Nat64, fee : Nat64) : Utxo {
+  for (utxo in Array.reverse(utxos).values()) {
+    if (utxo.value >= amount + fee) return utxo;
+  };
+  Runtime.trap("No single UTXO covers amount + fee")
+};
+```
+
+</TabItem>
+<TabItem label="Rust">
+
+```rust
+use ic_cdk_bitcoin_canister::Utxo;
+
+// Greedy: accumulate oldest-first until covering amount + fee.
+// Use for standard payments.
+fn select_utxos_greedy<'a>(
+    utxos: &'a [Utxo],
+    amount: u64,
+    fee: u64,
+) -> Result<Vec<&'a Utxo>, String> {
+    let mut selected = vec![];
+    let mut total = 0u64;
+    for utxo in utxos.iter().rev() {
+        total += utxo.value;
+        selected.push(utxo);
+        if total >= amount + fee {
+            break;
+        }
+    }
+    if total < amount + fee {
+        return Err(format!("Insufficient balance: {} satoshi", total));
+    }
+    Ok(selected)
+}
+
+// Single UTXO: find one that alone covers amount + fee.
+// Use for Ordinals, Runes, and BRC-20 where the asset is tied to a specific satoshi.
+fn select_one_utxo<'a>(
+    utxos: &'a [Utxo],
+    amount: u64,
+    fee: u64,
+) -> Result<Vec<&'a Utxo>, String> {
+    for utxo in utxos.iter().rev() {
+        if utxo.value >= amount + fee {
+            return Ok(vec![utxo]);
+        }
+    }
+    Err(format!("No single UTXO covers {} satoshi", amount + fee))
+}
+```
+
+</TabItem>
+</Tabs>
+
+### Common mistakes
+
+- **Not paginating `bitcoin_get_utxos`.** The response includes a `next_page` field. For addresses with many transactions a single call may not return all UTXOs. If `next_page` is non-null, call again with `filter = ?#page(next_page)` (Motoko) or `UtxosFilter::Page(next_page)` (Rust) until `next_page` is null.
+- **Spending unconfirmed or immature UTXOs.** Coinbase outputs require 100 confirmations before they can be spent. Non-coinbase UTXOs with zero confirmations carry double-spend risk. Use `min_confirmations` in the `bitcoin_get_utxos` filter when building payment flows.
+- **Skipping the iterative fee calculation.** Transaction size depends on the number of inputs selected. Build the transaction with fee=0, measure the signed size using a mock signer, recalculate the fee, and repeat until stable. Skipping this step produces transactions that underpay (stuck) or overpay.
+- **Creating change outputs below the dust threshold.** Change less than ~1,000 satoshis is uneconomical and some nodes reject outputs below this level. Either add the dust amount to the miner fee or omit the change output entirely.
+- **Concurrent calls spending the same UTXOs.** If two update calls fetch the same UTXO set at the same time, both will attempt to spend the same inputs. Only one transaction will be valid on the Bitcoin network; the other will be rejected. Track spent UTXOs in canister state and exclude them from future selections.
+
+### Cycle costs
+
+All Bitcoin API calls require cycles attached to the call. In Rust, the `ic-cdk-bitcoin-canister` crate handles this automatically. In Motoko, attach cycles explicitly with `(with cycles = amount)`. The table below shows minimum cycles to attach; for base costs and USD values see [Cycle costs](../../references/cycle-costs.md#bitcoin-integration-api).
+
+| API call | Testnet / Regtest | Mainnet |
+|---|---|---|
+| `bitcoin_get_balance` | 40,000,000 | 100,000,000 |
+| `bitcoin_get_utxos` | 4,000,000,000 | 10,000,000,000 |
+| `bitcoin_send_transaction` (base) | 2,000,000,000 | 5,000,000,000 |
+| `bitcoin_send_transaction` (per byte) | 8,000,000 | 20,000,000 |
+| `bitcoin_get_current_fee_percentiles` | 40,000,000 | 100,000,000 |
+| `bitcoin_get_block_headers` | 4,000,000,000 | 10,000,000,000 |
+| `get_blockchain_info` | 40,000,000 | 100,000,000 |
+
+## Development setup
+
+### Quickstart with the bitcoin-starter template
+
+The fastest way to get started is with the bitcoin-starter template:
+
+```bash
+icp new my-bitcoin-app --subfolder bitcoin-starter
+cd my-bitcoin-app
+```
+
+This sets up a project with multi-environment configuration already in place.
+
+### Local development with regtest
+
+For local testing, run a Bitcoin regtest node alongside your local ICP network. The `icp.yaml` configuration connects the two:
+
+```yaml
+canisters:
+  - backend
+
+networks:
+  - name: local
+    mode: managed
+    bitcoind-addr:
+      - "127.0.0.1:18444"
+
+environments:
+  - name: local
+    network: local
+    settings:
+      backend:
+        environment_variables:
+          BITCOIN_NETWORK: "regtest"
+
+  - name: staging
+    network: ic
+    settings:
+      backend:
+        environment_variables:
+          BITCOIN_NETWORK: "testnet"
+
+  - name: production
+    network: ic
+    settings:
+      backend:
+        environment_variables:
+          BITCOIN_NETWORK: "mainnet"
+```
+
+Start the Bitcoin regtest node (using Docker):
+
+```bash
+docker run -d --name bitcoind \
+  -p 18443:18443 -p 18444:18444 \
+  lncm/bitcoind:v27.2 \
+  -regtest -server -rpcbind=0.0.0.0 -rpcallowip=0.0.0.0/0 \
+  -rpcuser=ic-btc-integration -rpcpassword=ic-btc-integration \
+  -fallbackfee=0.00001 -txindex=1
+```
+
+Start the local ICP network and deploy:
+
+```bash
+icp network start -d
+icp deploy
+```
+
+### Test with regtest
+
+Create a wallet and mine some blocks:
+
+```bash
+# Create a regtest wallet
+docker exec bitcoind bitcoin-cli -regtest \
+  -rpcuser=ic-btc-integration -rpcpassword=ic-btc-integration \
+  createwallet "default"
+
+# Get a new address
+ADDR=$(docker exec bitcoind bitcoin-cli -regtest \
+  -rpcuser=ic-btc-integration -rpcpassword=ic-btc-integration \
+  getnewaddress)
+
+# Mine a block (rewards 50 BTC = 5,000,000,000 satoshis)
+docker exec bitcoind bitcoin-cli -regtest \
+  -rpcuser=ic-btc-integration -rpcpassword=ic-btc-integration \
+  generatetoaddress 1 "$ADDR"
+
+# Check balance through your canister
+icp canister call backend get_balance "(\"$ADDR\")"
+```
+
+Coinbase rewards require 100 confirmations before they can be spent. If you extend this to send transactions, mine at least 101 blocks so the first block's reward becomes spendable.
+
+### Deploy to testnet and mainnet
+
+Deploy to testnet (Bitcoin testnet4 via the IC mainnet):
+
+```bash
+icp deploy -e staging
+```
+
+Deploy to production (Bitcoin mainnet via the IC mainnet):
+
+```bash
+icp deploy -e production
+```
+
+The `BITCOIN_NETWORK` environment variable controls which Bitcoin network and Bitcoin API canister your code targets, without requiring any code changes.
+
+### Cleanup
+
+```bash
+icp network stop
+docker stop bitcoind && docker rm bitcoind
+```
+
+## Next steps
+
+- [Chain fusion overview](../../concepts/chain-fusion/index.md): understand how ICP integrates with external blockchains
+- [Chain-key cryptography](../../concepts/chain-key-cryptography.md): learn how threshold ECDSA and Schnorr signatures work
+- [Chain-key tokens](../digital-assets/chain-key-tokens.md): explore ckBTC, ckETH, and other chain-key tokens
+- [Ethereum integration](ethereum.md): apply similar patterns for Ethereum
+- [Management canister reference](../../references/management-canister.md): full API reference for `sign_with_ecdsa`, `sign_with_schnorr`, and other management canister methods (note: the `bitcoin_*` methods in the management canister are deprecated; use the Bitcoin canister directly)
+- [Bitcoin canister API specification](https://github.com/dfinity/bitcoin-canister/blob/master/INTERFACE_SPECIFICATION.md): detailed API documentation
+- [Bitcoin integration](../../concepts/chain-fusion/bitcoin.md): protocol-level details of how ICP connects to Bitcoin
+
+{/* Upstream: informed by dfinity/portal (docs/build-on-btc/*, docs/references/bitcoin-how-it-works.mdx, docs/references/cycles-cost-formulas.mdx); dfinity/icskills (skills/ckbtc/SKILL.md); dfinity/icp-cli-templates (bitcoin-starter/); dfinity/cdk-rs (ic-cdk-bitcoin-canister 0.2); dfinity/examples (rust/basic_bitcoin/src/common.rs, rust/basic_bitcoin/src/service/get_utxos.rs, rust/basic_bitcoin/src/service/get_blockchain_info.rs, rust/basic_bitcoin/basic_bitcoin.did, motoko/basic_bitcoin/src/basic_bitcoin/src/BitcoinApi.mo) */}

@@ -1,0 +1,704 @@
+---
+title: "Glossary"
+description: "Definitions of ICP-specific terms: canister, cycle, principal, subnet, and more"
+sidebar:
+  order: 17
+---
+
+# Glossary
+
+
+## A
+
+#### account
+
+A ledger **account** is a set of entries in the [ledger canister](#ledger-canister), similar to a bank account, denominated in [ICP](#icp) (Internet Computer Protocol) utility tokens. Ledger accounts are owned by [principals](#principal), and their ownerships do not change over time. Every account on the ledger has a positive [balance](#balance) measured in ICP with a precision of eight decimals.
+
+#### address
+
+In the context of [transactions](#transaction) on the ledger,
+**address** is synonymous with [ account](#account).
+
+#### actor
+
+An **actor** is a primitive in the [actor
+model](https://en.wikipedia.org/wiki/Actor-model). It is a process with
+encapsulated state that communicates with other concurrently running
+actors through asynchronous messages that are received sequentially. The
+actor model is relevant to the [ICP](#icp)
+because [canisters](#canister) on ICP follow the actor model for concurrent and asynchronous
+computation.
+
+## B
+
+#### balance
+
+The **balance** of an [account](#account) on the ledger is
+the sum of all deposits minus the sum of all withdrawals. As a
+degenerate case, it is sometimes useful to say that an account that is
+not present in the ledger has a balance of zero.
+
+The balance of a ledger account is denominated in ICP and is represented
+with eight decimals. Thus, the minimum positive balance of an account is
+0.00000001 or 10^-8 [ICP](#icp); this amount is sometimes
+referred to as one **e8**.
+
+#### batch
+
+A **batch** is a collection of [messages](#message) whose
+order is agreed upon by [consensus](#consensus).
+
+#### block maker
+
+A **block maker** is a [node](#node) selected by the [consensus](#consensus) protocol to propose a block in a given round. Block makers are chosen through a random permutation of [subnet](#subnet) nodes using randomness from the [random beacon](#random-beacon). The lowest-ranked node acts as the primary block maker; higher-ranked nodes step in if the primary fails to produce a notarized block within the timeout.
+
+#### beneficiary
+
+The **beneficiary** of an [account](#account) is the [principal](#principal) who owns the [balance](#balance) of the account. The beneficiary of an
+account cannot be changed. The beneficiary of an account may or may not
+be allowed to make [transactions](#transaction) on the
+account (see [fiduciary](#fiduciary)).
+
+#### blockchain
+
+A **blockchain** is a growing list of cryptographically linked blocks,
+agreed upon by [consensus](#consensus). On the [Internet Computer](#internet-computer-protocol-icp), every [subnet](#subnet) maintains its own
+blockchain with blocks containing messages for the [canisters](#canister)
+hosted on this subnet. These blockchains interact using [chain-key cryptography](#chain-key).
+
+#### boundary nodes
+
+**Boundary nodes** are gateways to the Internet Computer. These nodes
+allow users to access the [canisters](#canister) running on ICP.
+The boundary nodes have several purposes: they aid in discover-ability (the
+`icp.net` domain name points to a set of boundary nodes), they are
+geo-aware and can route incoming requests to the nearest subnet
+[node](#node) that hosts the [canister](#canister)
+involved, they can help load balance query
+[transactions](#transaction), they can cache
+cryptographically verified data in the role of a content distribution
+network, they can throttle excessive interactions from an outside IP
+address, and they can help protect subnets from DDoS attacks.
+
+#### burning transaction
+
+A **burning transaction** is the process of "burning" [ICP](#icp), whereby a certain amount of ICP is destroyed.
+The main use case is purchasing [cycles](#cycle),
+through which ICP is destroyed while at the same time a corresponding
+amount of cycles is created, using the current exchange rate between ICP
+and ([XDR](#xdr)), in such a way that one XDR corresponds to
+one trillion (10E12) cycles. It is represented as a [transaction](#transaction) from the source [account](#account) to the [ICP supply account](#icp-supply-account).
+
+## C
+
+#### Candid
+
+**Candid** is an IDL crafted specifically for the Internet Computer,
+providing a common language for application interfaces to facilitate
+communication between services that are written in different programming
+languages.
+
+#### canister
+
+A **canister** is a compute unit that bundles **code** and **state**. Canisters run on the [Internet Computer](#internet-computer-protocol-icp) and are accessible over the Internet.
+
+#### canister account
+
+A **canister account** is a ledger account owned by a [canister](#canister) (i.e., whose
+[fiduciary](#fiduciary) is a canister). A non-canister
+account is a ledger account whose fiduciary is a non-canister
+[principal](#principal).
+
+#### canister development kit (CDK)
+
+A **canister development kit** is an adapter used by the IC SDK that provides a programming language with the features necessary to create and manage canisters. The IC SDK comes with a few CDKs already installed for you so you can use them in the language of your choice.
+
+#### canister identifier
+
+The **canister identifier** or **canister ID** is a globally unique
+identifier that identifies a [canister](#canister) and can
+be used to interact with it.
+
+#### canister signature
+
+A **canister signature** uses a signature scheme based on [certified variables](#certified-variable). Public “keys” include a
+[canister id](#canister-identifier) plus a seed (so that
+every [canister](#canister) has many public keys); signatures
+are certificates that prove that the canister has put the signed message
+at a specific place in its state tree. Details can be found in the [Internet Computer interface specification](./ic-interface-spec/index.md#canister-signatures).
+
+#### canister state
+
+A **canister state** is the entire state of a
+[canister](#canister) at a given point in time. A canister’s
+state is divided into **user state** and **system state**. The user state is
+a [WebAssembly](#webassembly) module instance and the system
+state is the auxiliary state maintained by the [Internet Computer](#internet-computer-protocol-icp) on behalf of the canister, such
+as its compute allocation, balance of [cycles](#cycle),
+input and output queues, and other metadata. A canister interacts with
+its own system state either implicitly, such as when consuming cycles,
+or through the system API, such as when sending messages.
+
+#### catch-up package (CUP)
+
+A **catch-up package** is a data bundle that contains everything needed
+to bootstrap a [subnet](#subnet)
+[replica](#replica).
+
+#### certified query
+
+A **certified query** is a query call for which the response is
+certified.
+
+#### certified variable
+
+A piece of data that a [canister](#canister) can store in its
+[subnet](#subnet)’s canonical state in the processing of an
+update call (or inter-canister call), so that during the handling of a
+[query](#query) call, the canister can return a certificate
+to the user that proves that it really committed to that value.
+
+#### chain-key
+
+**Chain-key** cryptography consists of a set of cryptographic protocols
+that orchestrate the [nodes](#node) that make up the
+[Internet Computer](#internet-computer-protocol-icp). The most visible
+innovation of chain-key cryptography is that the Internet Computer has a
+single public key. This is a huge advantage as it allows any device,
+including smart watches and mobile phones, to verify the authenticity of
+artifacts from the Internet Computer.
+
+#### ckBTC
+
+**ckBTC** (chain-key Bitcoin) is a fungible token on ICP backed 1:1 by BTC held by the [Bitcoin canister](../references/protocol-canisters.md#bitcoin-canisters). Depositing BTC to a generated custody address mints the equivalent amount of ckBTC. Transfers settle in 1–2 seconds at a 10 satoshi fee. ckBTC can be redeemed for the underlying BTC at any time. It is the recommended way to integrate Bitcoin value into ICP applications. See [chain-key tokens](../concepts/chain-fusion/chain-key-tokens.md) for the underlying architecture.
+
+#### consensus
+
+In distributed computing, **consensus** is a [fault-tolerant](../concepts/evolution-scaling.md#fault-tolerance) mechanism by
+means of which a number of [nodes](#node) can reach agreement
+about a value or state.
+
+Consensus is a core component of the [replica](#replica)
+software. The [consensus](../concepts/protocol/consensus.md) layer selects [messages](#message)
+from the [peer-to-peer](../concepts/protocol/peer-to-peer.md) artifact pool and pulls messages from the
+cross-network streams of other [subnets](#subnet) and
+organizes them into a [batch](#batch), which is delivered to
+the [message routing](#message-routing) layer.
+
+#### controller
+
+A **controller** of a [canister](#canister) is a person,
+organization, or other canister that has administrative rights over the
+canister. Controllers are identified by their
+[principals](#principal). For example, a controller of a
+canister can upgrade the [WebAssembly](#webassembly) code of
+the canister or delete the canister.
+
+#### cycle
+
+On the [Internet Computer](#internet-computer-protocol-icp), a **cycle**
+is the unit of measurement for resources consumed in the form of
+processing, memory, storage, and network bandwidth. Every canister has a
+cycles account to which resources consumed by the canister are charged.
+The Internet Computer’s utility token ([ICP](#icp)) can be
+converted to cycles and transferred to a canister. Cycles can also be
+transferred between canisters by attaching them to an **inter-canister**
+message.
+
+ICP can always be converted to cycles using the current price of ICP
+measured in **XDR** using the convention that one trillion cycles
+correspond to one **XDR**.
+
+## D
+
+#### data center
+
+A **data center** (DC) is a physical site that hosts
+[nodes](#node) which contribute to the [Internet Computer](#internet-computer-protocol-icp). It includes the hardware and
+software infrastructure required for node deployment.
+Data centers are nodes that are selected and vetted by the [NNS](#network-nervous-system-nns).
+
+#### Deterministic Time Slicing (DTS)
+
+**Deterministic Time Slicing** (DTS) is a mechanism in the [execution layer](../concepts/protocol/execution.md) that allows a long-running canister computation to span multiple [consensus](#consensus) rounds. Instead of timing out, a computation that exceeds the per-round instruction limit is paused at the end of a round and automatically resumed in the next. DTS is transparent to canisters and requires no special canister code.
+
+#### dissolve delay
+
+The **dissolve delay** is the amount of time that
+[neurons](#neuron) must spend [dissolving](#dissolving-state) before becoming [dissolved](#dissolved-state).
+
+#### dissolved state
+
+The **dissolved state** is a [neuron](#neuron) state
+characterized by a [dissolve delay](#dissolve-delay) equal to
+zero. (It is conventionally said that a neuron in this state does not
+"have" a dissolve delay.) It is in this state that a neuron can be
+"disbursed," hence its stake moved elsewhere, and its corresponding
+[neuron account](#neuron-account) closed. The
+[age](#neuron-age) of a dissolved neuron is considered to be
+zero.
+
+#### dissolving state
+
+A **dissolving state** is a [neuron](#neuron) state that
+follows immediately after its owner issues a "start dissolving" command,
+and continues until a "stop dissolving" command is issued, or until the
+dissolve delay timer runs out. The [age of a dissolving neuron](#neuron-age) is considered to be zero.
+
+## E
+
+#### execution environment
+
+The **execution environment** is one of the core layers of the
+[replica](#replica) software.
+
+## F
+
+#### fiduciary
+
+The **fiduciary** of an [account](#account) is the
+[principal](#principal) allowed to make
+[transactions](#transaction) on the account; as such, it may
+be useful to think of it as the **owner** of the account, with the caveat
+that it may or may not be the [beneficiary](#beneficiary) of
+the account. The [neuron account](#neuron-account) is a
+prominent example of an account for which the beneficiary and fiduciary
+do not coincide (the fiduciary is the [governance canister](#governance-canister) while the beneficiary is the
+neuron holder). The fiduciary of a (ledger) account does not change over
+time.
+
+The distinction between fiduciary and beneficiary is also important for canisters that manage funds on behalf of users (for example, a canister that holds and transfers ICP for multiple principals). In this case, the fiduciary is the canister while the beneficiary is the [principal](#principal) whose funds it holds.
+
+## G
+
+#### governance canister
+
+The **[governance](../concepts/governance.md#the-network-nervous-system) canister** is a [system canister](#system-canister) that implements the
+[NNS](#network-nervous-system-nns) governance system, i.e.,
+among others, stores and manages [neurons](#neuron) and
+[proposals](#proposal), and implements the NNS
+[voting](#voting) environment.
+
+## I
+
+#### ICP
+
+The **Internet Computer Protocol** token (ticker "ICP") is the utility
+token of the [Internet Computer](#internet-computer-protocol-icp). ICP
+allows the broader internet community to participate in the governance
+of the Internet Computer blockchain network by locking ICP in
+[neurons](#neuron). ICP can also be converted into
+[cycles](#cycle), which are then used to power
+[canisters](#canister).
+
+#### ICP supply account
+
+The **ICP supply account** is a quasi-fictitious ledger
+[account](#account) whose balance is always zero. It has a
+central role in [ICP](#icp) [burning](#burning-transaction)
+and [minting](#minting-transaction) operations.
+
+#### ICRC
+
+**ICRC** (Internet Computer Request for Comments) is the token and interface standard system for ICP, analogous to ERC standards on Ethereum. Standards are numbered sequentially: ICRC-1 defines the core fungible token interface (transfers and balance queries), ICRC-2 adds approval and transfer-from semantics, ICRC-3 standardizes the transaction log format. All DFINITY-maintained asset ledgers implement at least ICRC-1 and ICRC-2. See [digital asset standards](digital-asset-standards.md) for the full list.
+
+#### identity
+
+An **identity** is a byte string that is used to identify an entity,
+such as a [principal](#principal), that interacts with the
+[Internet Computer](#internet-computer-protocol-icp). For users, the
+identity is the SHA-224 hash of the DER-encoded public key of the user.
+[IC interface specification](./ic-interface-spec/index.md) has more
+detail.
+
+#### Internet Identity
+
+**Internet Identity** is an anonymizing blockchain authentication system
+running on the [Internet Computer](#internet-computer-protocol-icp).
+
+#### induction pool
+
+The **induction pool** of a [subnet](#subnet) blockchain is
+the collection of all [input queues](#input-queue) of all
+[canisters](#canister) residing on the subnet.
+
+#### ingress message
+
+An **ingress message** is a [message](#message) sent by an
+end-user to a [canister](#canister) running on a
+[subnet](#subnet) blockchain. The message is signed by the
+secret key corresponding to the end-user’s
+[identity](#identity) and sent to one of the
+[replicas](#replica) that participate in the subnet.
+
+#### ingress message history
+
+The **ingress message history** records the current status of every
+[ingress message](#ingress-message) processed by a
+[replica](#replica) and keeps track of whether messages were
+successfully included in the [induction pool](#induction-pool) and the responses of executed
+messages.
+
+#### input queue
+
+The **input queue** of a [canister](#canister) contains all
+[messages](#message) bound for the canister. See also
+[induction pool](#induction-pool). When the canister is
+scheduled for execution, messages from its input queue will be executed.
+
+#### inter-canister message
+
+An **inter-canister message** is a [message](#message) sent
+from one [canister](#canister) to another. Inter-canister
+messages are different from user-initiated [ingress messages](#ingress-message).
+
+#### Internet Computer Protocol (ICP)
+
+The **Internet Computer Protocol** (ICP) is a tamperproof, sovereign network that
+provides scalable compute capacity for running
+[canisters](#canister) through independent [node providers](#node-provider) running [nodes](#node)
+in geographically distributed [data centers](#data-center).
+
+## L
+
+#### latency
+
+**Latency** is the time between submitting a call to a canister and receiving a response. Update call latency is bounded by consensus finality: typically 1–2 seconds on a 13-node subnet. Query call latency is dominated by network round-trip time to a single node: typically 100–200ms. See [Performance](../concepts/protocol/performance.md) for measured values.
+
+#### ledger canister
+
+The **ledger canister** is a [system canister](#system-canister) whose main role is to store
+[accounts](#account) and their corresponding
+[transactions](#transaction).
+
+## M
+
+#### message
+
+A **message** is data sent from one [canister](#canister) to
+another or from a user to a canister.
+
+#### MIEPS
+
+**MIEPS** (Millions of Instructions Executed Per Second) is the primary throughput metric for ICP compute capacity. It counts replicated Wasm instructions executed per second across all subnets, excluding query calls. A single subnet can execute up to 8 billion instructions per second (8,000 MIEPS). See [Performance](../concepts/protocol/performance.md) for measured network-wide values.
+
+#### message routing
+
+The **[message routing](../concepts/protocol/message-routing.md)** layer receives [batches](#batch) from
+the [consensus](#consensus) layer and inducts them into the
+[induction pool](#induction-pool). Message routing then
+schedules a set of [canisters](#canister) to execute messages
+from their [input queues](#input-queue).
+
+After [messages](#message) have been executed, the message
+routing layer takes any messages produced in the execution round from
+the output queues and puts those messages into the outgoing streams to
+be consumed by canisters on other [subnets](#subnet).
+
+#### minting transaction
+
+A **minting transaction** is the process of "minting"
+[ICP](#icp), whereby a certain amount of ICP comes into
+existence. ICP is minted in order to reward
+[neurons](#neuron) for [voting](#voting), and
+reward [node providers](#node-provider) for participating in
+the [ICP](#icp) by providing compute
+capacity through the running of [nodes](#node). A minting
+transaction is represented as a [transaction](#transaction)
+from the [ICP supply account](#icp-supply-account) to a
+destination [account](#account).
+
+#### Motoko
+
+**Motoko** is a programming language designed to directly support the
+programming model of the [Internet Computer](#internet-computer-protocol-icp), making it easier to
+efficiently build applications and take advantage of some of the more
+unusual features of ICP, including the actor model for smart
+contracts and compilation to WebAssembly.
+
+## N
+
+#### non-dissolving state
+
+A [neuron](#neuron) that is not
+[dissolved](#dissolved-state) or [dissolving](#dissolving-state) is said to be in a
+**non-dissolving state** (or "aging"). Non-dissolving neurons thus
+accrue "age," with the caveat that beginning to dissolve at any time
+reduces this age back to zero. The dissolve delay parameter of a
+non-dissolving (aka "aging") neuron cannot be zero, because such a
+neuron would have to already be dissolved.
+
+#### Network Nervous System (NNS)
+
+The **Network Nervous System** (NNS) is the decentralized autonomous
+organization (DAO) that governs the [Internet Computer](#internet-computer-protocol-icp)
+by [proposals](#proposal) on which [ICP](#icp) [neuron](#neuron) owners can vote.
+Once such a proposal is accepted, it is autonomously executed.
+The NNS consists of a collection of [system canisters](#system-canister) (aka "NNS canisters").
+
+#### neuron
+
+A **neuron** is an [ICP](#icp) entity that
+can make [proposals](#proposal) and vote on proposals related
+to the [governance](../concepts/governance.md#the-network-nervous-system) of the [Internet Computer](#internet-computer-protocol-icp).
+
+To provide the stability required for responsible governance, neurons
+need to store ("stake") a certain amount of [ICP](#icp) in
+order to be able to make and vote on proposals. This
+[locks](#non-dissolving-state) the tokens for a period of
+time, after which it starts [dissolving](#dissolving-state).
+The ICP stake of a neuron is stored in a [neuron account](#neuron-account). The neuron owner has the right to
+propose and vote on governance issues and is granted rewards for
+[voting](#voting) in proportion to the amount of ICP staked,
+and the duration of the [dissolve period](#dissolve-delay).
+
+#### neuron account
+
+A **neuron account** is a [canister account](#canister-account) whose
+[beneficiary](#beneficiary) is a [neuron](#neuron)
+(or the neuron’s owner). The [governance canister](#governance-canister) is the
+[fiduciary](#fiduciary) of all neuron accounts.
+
+#### neuron age
+
+The **neuron age** is a [neuron](#neuron) parameter roughly
+indicative of the time that has passed since its creation or since when
+it last entered into a [non-dissolving state](#non-dissolving-state). Calculation of a neuron’s age
+needs to take into account whether the neuron has spent time [dissolving](#dissolving-state) or
+[dissolved](#dissolved-state), both of which reset this
+parameter.
+
+#### node
+
+A **node** is a physical hardware device run by independent
+[node providers](#node-provider). It hosts all the
+hardware, [replica](#replica) software, and configuration
+settings required to participate in the [Internet Computer](#internet-computer-protocol-icp).
+
+#### node operator
+
+A **node operator** (NO) is a non-canister [principal](#principal) with a scoped authority to add/remove unassigned [nodes](#node) to/from the [ICP](#icp).
+
+This power is granted in advance through an NNS [proposal](#proposal) stored in the [registry canister](#registry).
+The proposal defines maximum node operator capacity, and is scoped to a specific [node provider](#node-provider), in a specific [data center](#data-center) with a specific IPv6 prefix.
+Actual addition/removal of an unassigned node requires no further approvals, and is executed through a message to the [registry canister](#registry) signed by the corresponding node operator.
+
+Node operators and [node providers](#node-provider) **are not** the same entities, however they are related, as configuring [node operator keys and records](https://internetcomputer.org/wiki/node-provider-onboarding/#step-10--create-the-node-operator-record) is part of the node provider onboarding process. 
+
+#### node provider
+
+A **node provider** (NP) is a non-canister
+[principal](#principal) that receives the rewards stemming
+from node participation to the [ICP](#icp)
+(aka “payout principal”). Usually, though not necessarily, a node
+provider is the owner of the [node](#node), and may also be
+involved in node operation and related tasks. A node provider may
+receive rewards from multiple nodes in multiple [data centers](#data-center).
+Node providers are selected and vetted by the [NNS](#network-nervous-system-nns).
+
+## O
+
+#### orthogonal persistence
+
+**Orthogonal persistence** is the storage model used by the ICP [execution layer](../concepts/protocol/execution.md). Canister memory pages are persisted to disk automatically after each round without requiring explicit read or write operations. Developers can treat canister state as always in memory; the runtime handles persistence transparently. See the [orthogonal persistence concept page](../concepts/orthogonal-persistence.md) for details.
+
+#### output queue
+
+Each [canister](#canister) has an **output queue** of
+[messages](#message) bound for other canisters.
+
+## P
+
+#### peer-to-peer (P2P)
+
+In common usage, **[peer-to-peer](../concepts/protocol/peer-to-peer.md)** (P2P) computing or networking is a
+distributed application architecture that partitions workload across a
+network of equally privileged computer [nodes](#node) so that
+participants can contribute resources such as processing power, disk
+storage, or network bandwidth to handle application workload.
+
+The **[peer-to-peer](../concepts/protocol/peer-to-peer.md) layer** collects and disseminates
+[messages](#message) and artifacts from users and from other
+nodes.
+
+The [nodes](#node) of a [subnet](#subnet) form a
+dedicated [peer-to-peer](../concepts/protocol/peer-to-peer.md) broadcast network that facilitates the secure
+**bounded-time/eventual delivery** broadcast of artifacts (such as
+[ingress messages](#ingress-message), control messages, and
+their signature shares). The [consensus](#consensus) layer
+builds upon this functionality.
+
+#### principal
+
+A **principal** is an entity that can be authenticated by the [Internet Computer](#internet-computer-protocol-icp). Principals include canister IDs, user identities derived from public keys, and the anonymous principal. See [Principals](../concepts/principals.md) for the full classification and how they are used for access control.
+
+#### proposal
+
+A **proposal** is a statement describing an action to modify certain
+parameters of the [ICP](#icp), or of any of
+its subsystems. It is implemented as an ICP entity having various
+attributes, such as an ID, a URL, a summary, etc. Proposals are submitted
+by eligible [neuron](#neuron) owners for the consideration of
+ICP community, and undergo a [voting](#voting) process,
+following which they can be adopted or rejected. Adopted proposals are
+then executed autonomously. There are several taxonomies of proposals, the most
+prominent of which groups proposals into "topics," whose adoption, in
+turn, triggers certain categories of actions, such as the creation of a
+[subnet](#subnet), the addition of
+[nodes](#node) to a subnet, or the upgrade to a new [replica](#replica)
+software.
+
+#### proto-node
+
+A **proto-node** is an [ICP](#icp) entity
+consisting of a combination of hardware and software that differs from
+a [node](#node) in that it has not yet been registered with
+ICP. A proto-node is, in short, a "node-in-waiting," hence has all
+that it takes to be a node except the [replica](#replica)
+software.
+
+## Q
+
+#### query
+
+A **query** is an optimized way to execute operations on a
+[canister](#canister) where the state changes are not
+preserved. Queries are synchronous and can be made to any
+[node](#node) that hosts the canister. Queries do not require
+[consensus](#consensus) to verify the result.
+
+## R
+
+#### random beacon
+
+The **random beacon** is a source of cryptographic randomness produced each [consensus](#consensus) round using threshold BLS signatures. Every [subnet](#subnet) node contributes a signature share; when enough shares are combined, a verifiable random value is produced. The random beacon is used to select [block makers](#block-maker) and other randomized elements of the consensus protocol.
+
+#### replica
+
+The **replica** an instance of software containing all the protocol components
+necessary for a [node](#node) to participate in a
+[subnet](#subnet).
+
+#### registry
+
+The ICP **registry** is a [canister](#canister) that manages
+the metadata maintained on the
+network nervous system ([NNS](#network-nervous-system-nns))
+and accessed by all [subnet](#subnet) blockchains.
+
+## S
+
+#### stable memory
+
+**Stable memory** is a persistent memory region in each [canister](#canister) that survives Wasm module upgrades. Unlike heap memory, which is cleared when a new Wasm module is installed, stable memory is preserved across upgrades and is addressed through the system API. It is the recommended location for data that must persist long-term. See [orthogonal persistence](../concepts/orthogonal-persistence.md) for how Motoko manages this automatically, and [data persistence](../guides/backends/data-persistence.mdx) for Rust patterns.
+
+#### state change
+
+A **state change** is the result of any function call or operation that changes the information stored in a [canister](#canister). For example, if a function makes an update call that adds two numbers together or removes a name from a list, the result is a change to the canister state.
+
+#### state manager
+
+The **state manager** is responsible for:
+
+- Maintaining (multiple versions of) the replicated state the deterministic state machine implemented by [message routing](#message-routing) and the [execution environment](#execution-environment) operates on.
+- Converting back and forth between the replicated state and its canonical version (the latter can be understood independent of the concrete implementation).
+- Obtaining certifications of parts of the canonical state, which allow other stakeholders, such as other [subnets](#subnet) and/or users, to verify that some piece of state indeed originates from a valid subnetwork.
+- Providing capabilities to sync the canonical state with other [replicas](#replica) in the same subnet so that replicas that have fallen behind can catch up.
+
+#### subnet
+
+A **subnet** (subnetwork) is a collection of [nodes](#node)
+that run their own instance of the [consensus](#consensus)
+algorithm to produce a subnet blockchain that interacts with other
+subnets of [ICP](#icp) using [chain key](#chain-key) cryptography.
+
+#### system canister
+
+A **system canister** is a pre-installed
+[canister](#canister) that performs certain tasks needed to
+maintain the [Internet Computer](#internet-computer-protocol-icp).
+
+## T
+
+#### transaction
+
+A ledger account **transaction** is the process of transferring
+[ICP](#icp) from one [account](#account) to
+another; it can be of three types:
+- Regular transfer transaction.
+- [Burning](#burning-transaction) transaction
+- [Minting](#minting-transaction) transaction.
+
+#### transfer transaction
+
+A **transfer transaction** is the process of transferring ICP from any
+regular ledger [account](#account) (i.e., any ledger account
+except the [ICP supply account](#icp-supply-account)) to
+another regular ledger account.
+
+#### throughput
+
+**Throughput** is the number of messages a subnet can process per second. It is measured separately for update calls (replicated, consensus-required) and [query calls](#query) (non-replicated, single-node). Update throughput is bounded by consensus capacity and scales by adding subnets. Query throughput scales linearly with the number of nodes in a subnet, since each node independently handles queries. See [Performance](../concepts/protocol/performance.md) for measured values.
+
+#### Trusted Execution Environment (TEE)
+
+A **Trusted Execution Environment** (TEE) is a hardware-enforced isolation mechanism that protects the memory and state of a virtual machine from the host operating system and hypervisor. ICP uses AMD SEV-SNP as its TEE technology on supported nodes, providing memory encryption, VM launch measurements, and attestation reports that allow external parties to verify the exact software a node is running. See [node infrastructure](../concepts/node-infrastructure.md#trusted-execution-environments) for how ICP uses TEEs in practice.
+
+## U
+
+#### user
+
+A **user** is any entity that interacts with the [Internet Computer](#internet-computer-protocol-icp). Users include end users that
+use apps deployed on [ICP](#icp), app
+developers, holders of [ICP](#icp) utility tokens, and
+[neuron](#neuron) holders.
+
+## V
+
+#### valid set rule
+
+The **valid set rule** is the rule that determines a valid [induction pool](#induction-pool). [Ingress messages](#ingress-message) and [inter-canister messages](#inter-canister-message) must pass certain checks
+to ensure that the valid set rule is upheld before they can be added to
+the induction pool.
+
+#### vetKeys
+
+**VetKeys** (Verifiable Encrypted Threshold Keys) is a protocol that enables ICP to derive encrypted key material on demand and deliver it to authorized callers without any single node learning the plaintext key. It enables encryption enforced by the network, identity-based encryption, and time-lock decryption without requiring trust in a single party. See [VetKeys](../concepts/vetkeys.md) for the full concept.
+
+#### voting
+
+**Voting** is the process through which
+[proposals](#proposal) are selected for adoption and
+implementation. Its direct participants are the
+[neurons](#neuron), who both:
+-  Submit proposals.
+-  Vote on proposals.
+The voting process is a rather intricate undertaking,
+involving aspects such as neuron eligibility, voting power, chains of
+neuron followees, etc. This has been designed with security and
+dependability in mind, and is being continuously improved in order to
+prevent the concentration of voting power in the hands of just a few
+neuron owners.
+
+## W
+
+#### WebAssembly
+
+**WebAssembly** (abbreviated Wasm) is a binary instruction format for a
+stack-based virtual machine.
+
+## X
+
+#### XNet
+
+**XNet** is the cross-subnet messaging stream used to deliver [messages](#message) between [canisters](#canister) on different [subnets](#subnet). XNet messages produced by the [execution layer](../concepts/protocol/execution.md) are certified by the originating subnet using [chain-key](#chain-key) cryptography and validated by [block makers](#block-maker) on the receiving subnet before being included in a block.
+
+#### XDR
+
+**XDR** is the currency code for *special drawing rights (SDR)*. SDRs are supplementary foreign exchange assets that are defined and maintained by the International Monetary Fund (IMF). SDRs are not a currency themselves but represent a claim to a currency that is held by IMF member countries in which they may be exchanged. The ICP developer docs refer to currencies based on their currency codes, therefore SDRs are referenced as its currency code **XDR** in this documentation.
+
+<!--
+Link replacements from portal source (portal used absolute paths):
+  - /references/ic-interface-spec/ → ./ic-interface-spec/index.md (×2, link text shortened to "IC interface specification")
+-->
+<!-- Upstream: sync from dfinity/portal — docs/references/glossary.mdx -->

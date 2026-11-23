@@ -17,25 +17,39 @@ alwaysApply: true
 | `deployGuide` | Building, deploying, upgrading — read `deployGuide/SKILL.md` first |
 | `buildAndTest`, `bumpPocketIc`, `bumpRustNightly` | Only inside the dfinity/motoko compiler repo |
 
+## Official Internet Computer Protocol & Toolchain References
+
+Comprehensive offline specifications bundled in `backend/.agent/`:
+
+| Reference / Guide | Focus | Path |
+|---|---|---|
+| **Internet Computer Master Guide** | Architecture, security, PocketIC, Rust/Motoko | [`../../../backend/.agent/skills/internetComputer/SKILL.md`](../../../backend/.agent/skills/internetComputer/SKILL.md) |
+| **Motoko Official Language Spec** | Language manual, syntax, types, actors, EOP | [`../../../backend/.agent/skills/internetComputer/assets/languages/motoko/index.md`](../../../backend/.agent/skills/internetComputer/assets/languages/motoko/index.md) |
+| **Developer Tools (`icp-cli`, `moc`, `ic-wasm`)** | Toolchain setup, `icp-cli` migration from `dfx` | [`../../../backend/.agent/skills/internetComputer/assets/developer-tools/index.md`](../../../backend/.agent/skills/internetComputer/assets/developer-tools/index.md) |
+| **Canister Security Guardrails** | Anonymous rejection, reentrancy guards, cycles defense | [`../../../backend/.agent/skills/internetComputer/references/canisterSecurityGuardrails.md`](../../../backend/.agent/skills/internetComputer/references/canisterSecurityGuardrails.md) |
+| **PocketIC Testing Strategies** | Deterministic multi-canister testing | [`../../../backend/.agent/skills/internetComputer/references/pocketicTestingStrategies.md`](../../../backend/.agent/skills/internetComputer/references/pocketicTestingStrategies.md) |
+
 ## IcFalcon guide skills (parent folder)
 
 | Skill | Path |
 |---|---|
-| Project setup | `../guide/projectSetupStandard/SKILL.md` |
-| Local deploy | `../guide/localDeployStandard/SKILL.md` |
-| Production deploy | `../guide/productionDeployStandard/SKILL.md` |
-| Release | `../guide/releaseStandard/SKILL.md` |
+| Project setup | [`../guideStandard/projectSetupStandard/SKILL.md`](../guideStandard/projectSetupStandard/SKILL.md) |
+| Local deploy | [`../guideStandard/localDeployStandard/SKILL.md`](../guideStandard/localDeployStandard/SKILL.md) |
+| Production deploy | [`../guideStandard/productionDeployStandard/SKILL.md`](../guideStandard/productionDeployStandard/SKILL.md) |
+| Release | [`../guideStandard/releaseStandard/SKILL.md`](../guideStandard/releaseStandard/SKILL.md) |
 
 ## IcFalcon project skills (parent folder)
 
 | Skill | Path |
 |---|---|
-| Integration | `../integrationStandard/SKILL.md` |
-| Layering | `../layering/SKILL.md` |
-| Coding standard | `../codingStandard/SKILL.md` |
-| Errors | `../errorHandling/SKILL.md` |
-| Migrations | `../migration/SKILL.md` |
-| Testing | `../testingStandard/SKILL.md` |
+| Integration | [`../integrationStandard/SKILL.md`](../integrationStandard/SKILL.md) |
+| Layering | [`../layeringStandard/SKILL.md`](../layeringStandard/SKILL.md) |
+| Coding standard | [`../codingStandard/SKILL.md`](../codingStandard/SKILL.md) |
+| Errors | [`../errorHandlingStandard/SKILL.md`](../errorHandlingStandard/SKILL.md) |
+| Migrations | [`../migrationStandard/SKILL.md`](../migrationStandard/SKILL.md) |
+| Testing | [`../testingStandard/SKILL.md`](../testingStandard/SKILL.md) |
+| Cycles & Costs | [`../cycleCostStandard/SKILL.md`](../cycleCostStandard/SKILL.md) |
+| Version Standard | [`../versionStandard/SKILL.md`](../versionStandard/SKILL.md) |
 
 ## Objective
 
