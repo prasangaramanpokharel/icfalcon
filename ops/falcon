@@ -237,6 +237,9 @@ expand_template() {
 
 resolve_command() {
   local command="$1"
+  case "$command" in
+    update|up|s:update|s:up) echo "setup:update"; return 0 ;;
+  esac
   local alias_target
   alias_target="$(yaml_alias_target "$command" || true)"
   if [[ -n "$alias_target" ]]; then
@@ -263,6 +266,9 @@ run_command() {
 
   local script
   script="$(yaml_command_field "$resolved" script || true)"
+  if [[ "$resolved" == "setup:update" && -z "$script" ]]; then
+    script="ops/scripts/framework-update.sh"
+  fi
 
   local network_label="mainnet"
   [[ "$network_flag" == "--network local" ]] && network_label="local"
