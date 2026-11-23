@@ -33,6 +33,6 @@ falcon f:dev                # local dev (optional)
 npm run build --prefix frontend
 ```
 
-UI rules: shadcn only, camelCase folders — `.agents/skills/frontendStandard/SKILL.md`
+UI rules: shadcn only, camelCase folders — `.agent/skills/frontendStandard/SKILL.md`
 
 Brand: `public/brand/logo.png`, favicon `app/icon.png`

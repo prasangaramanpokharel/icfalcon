@@ -72,7 +72,7 @@ Do not create circular dependencies.
 
 # 2. AI-Native Development
 
-`.agents/skills` is a core IcFalcon feature.
+`.agent/skills` is a core IcFalcon feature.
 
 AI agents must be able to understand:
 
@@ -89,7 +89,7 @@ Skills should contain actionable implementation knowledge, not only documentatio
 Example:
 
 ```text
-.agents/
+.agent/
 └── skills/
     ├── wallet/
     ├── icrc/

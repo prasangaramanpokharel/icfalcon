@@ -10,7 +10,7 @@
 |---|---|---|
 | Framework architecture | 8.5 | Layering, `falcon m:f`, CLI, skills |
 | Hub package registry | 7.5 | 92 packages; connectors mostly L1 depth |
-| AI agent readiness | 8.0 | `.agents/skills` is a real differentiator |
+| AI agent readiness | 8.0 | `.agent/skills` is a real differentiator |
 | ICP money / wallet | 4.0 | `wallet`, `ledger`, `icrc1` are stubs |
 | Reference apps | 5.0 | Shop/Product demo — no wallet showcase |
 | Future adoption | 6.5 | Strong bones; missing money + AI actions story |
@@ -60,10 +60,10 @@ flowchart LR
 | Asset | Path |
 |---|---|
 | Hub registry | [hub/README.md](../../hub/README.md) |
-| Ledger integration skill | [.agents/skills/motokoStandard/ledgerIntegrationStandard/SKILL.md](../../.agents/skills/motokoStandard/ledgerIntegrationStandard/SKILL.md) |
-| Feature integration skill | [.agents/skills/integrationStandard/SKILL.md](../../.agents/skills/integrationStandard/SKILL.md) |
-| Layering rules | [.agents/skills/layeringStandard/SKILL.md](../../.agents/skills/layeringStandard/SKILL.md) |
-| Frontend standard | [.agents/skills/frontendStandard/SKILL.md](../../.agents/skills/frontendStandard/SKILL.md) |
+| Ledger integration skill | [.agent/skills/motokoStandard/ledgerIntegrationStandard/SKILL.md](../../.agent/skills/motokoStandard/ledgerIntegrationStandard/SKILL.md) |
+| Feature integration skill | [.agent/skills/integrationStandard/SKILL.md](../../.agent/skills/integrationStandard/SKILL.md) |
+| Layering rules | [.agent/skills/layeringStandard/SKILL.md](../../.agent/skills/layeringStandard/SKILL.md) |
+| Frontend standard | [.agent/skills/frontendStandard/SKILL.md](../../.agent/skills/frontendStandard/SKILL.md) |
 
 ---
 
@@ -73,7 +73,7 @@ flowchart LR
 |---|---|
 | Hosted closed platforms | Open hub + `falcon add pkg` |
 | Raw Motoko, no structure | Fixed api → service → repo → storage |
-| Generic templates | AI-native `.agents/skills` |
+| Generic templates | AI-native `.agent/skills` |
 | Web3 SDKs (non-ICP) | II, ICRC, subaccounts, cycles |
 
 **Moat:** framework + skills + deep ICP money packages together.
@@ -84,5 +84,5 @@ flowchart LR
 
 1. Read [Phase 1](1/README.md) — wallet and transfer packages.
 2. Implement hub pkgs in `hub/packages/` (not `backend/pkg/`).
-3. Add matching skills under `.agents/skills/`.
+3. Add matching skills under `.agent/skills/`.
 4. Ship wallet demo in Phase 3.

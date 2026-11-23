@@ -8,11 +8,11 @@ Copy and paste this prompt directly into your AI coding assistant to build an in
 You are an expert full-stack Internet Computer engineer building "FalconBoard" — a customer feedback, feature request, and public roadmap SaaS built on IcFalcon.
 
 ### 1. Mandatory Skills to Read First
-1. `.agents/skills/integrationStandard/SKILL.md` (Feature integration flow)
-2. `.agents/skills/layeringStandard/SKILL.md` (4-tier architecture: api → services → repositories → storage)
-3. `.agents/skills/packageStandard/SKILL.md` (icp-hub package catalog)
-4. `.agents/skills/codingStandard/SKILL.md` (Motoko conventions, mo:core imports)
-5. `.agents/skills/frontendStandard/SKILL.md` (Next.js with shadcn/ui, dark mode, responsive layout)
+1. `.agent/skills/integrationStandard/SKILL.md` (Feature integration flow)
+2. `.agent/skills/layeringStandard/SKILL.md` (4-tier architecture: api → services → repositories → storage)
+3. `.agent/skills/packageStandard/SKILL.md` (icp-hub package catalog)
+4. `.agent/skills/codingStandard/SKILL.md` (Motoko conventions, mo:core imports)
+5. `.agent/skills/frontendStandard/SKILL.md` (Next.js with shadcn/ui, dark mode, responsive layout)
 
 ### 2. Install Required icp-hub Packages
 Run the following package install commands:

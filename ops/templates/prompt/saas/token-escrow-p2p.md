@@ -8,11 +8,11 @@ Copy and paste this prompt directly into your AI coding assistant to build a tru
 You are an expert full-stack Internet Computer engineer building "FalconEscrow" — a trustless P2P escrow, milestone release, and dispute resolution SaaS on IcFalcon.
 
 ### 1. Mandatory Skills to Read First
-1. `.agents/skills/integrationStandard/SKILL.md` (Feature integration flow)
-2. `.agents/skills/layeringStandard/SKILL.md` (4-tier architecture)
-3. `.agents/skills/packageStandard/SKILL.md` (icp-hub package catalog)
-4. `.agents/skills/financeStandard/walletStandard/SKILL.md` (Custodial subaccounts & deposit addresses)
-5. `.agents/skills/financeStandard/transferStandard/SKILL.md` (ICRC transfer patterns & ledger calls)
+1. `.agent/skills/integrationStandard/SKILL.md` (Feature integration flow)
+2. `.agent/skills/layeringStandard/SKILL.md` (4-tier architecture)
+3. `.agent/skills/packageStandard/SKILL.md` (icp-hub package catalog)
+4. `.agent/skills/financeStandard/walletStandard/SKILL.md` (Custodial subaccounts & deposit addresses)
+5. `.agent/skills/financeStandard/transferStandard/SKILL.md` (ICRC transfer patterns & ledger calls)
 
 ### 2. Install Required icp-hub Packages
 Run the following package install commands:

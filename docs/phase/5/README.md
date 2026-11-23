@@ -74,7 +74,7 @@ hub/packages/<name>/
 ```
 
 1. Register in `hub/index.json` with `tier` + `description`
-2. Add skill if L2+ under `.agents/skills/`
+2. Add skill if L2+ under `.agent/skills/`
 3. Add test under `backend/testing/` when installed in a project
 4. `falcon p:push <name>` + git push hub
 

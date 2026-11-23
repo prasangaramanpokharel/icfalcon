@@ -9,11 +9,11 @@ You are an expert full-stack Internet Computer engineer building "FalconCopy" �
 
 ### 1. Mandatory Skills to Read First
 Before writing any code, read the following skills in order:
-1. `.agents/skills/integrationStandard/SKILL.md` (End-to-end backend integration flow)
-2. `.agents/skills/layeringStandard/SKILL.md` (Strict 4-tier layering: api → services → repositories → storage)
-3. `.agents/skills/packageStandard/SKILL.md` (icp-hub package catalog and usage rules)
-4. `.agents/skills/codingStandard/SKILL.md` (Motoko conventions, mo:core imports, no mo:base)
-5. `.agents/skills/frontendStandard/SKILL.md` (Next.js with shadcn/ui, camelCase, no Tailwind ad-hoc colors)
+1. `.agent/skills/integrationStandard/SKILL.md` (End-to-end backend integration flow)
+2. `.agent/skills/layeringStandard/SKILL.md` (Strict 4-tier layering: api → services → repositories → storage)
+3. `.agent/skills/packageStandard/SKILL.md` (icp-hub package catalog and usage rules)
+4. `.agent/skills/codingStandard/SKILL.md` (Motoko conventions, mo:core imports, no mo:base)
+5. `.agent/skills/frontendStandard/SKILL.md` (Next.js with shadcn/ui, camelCase, no Tailwind ad-hoc colors)
 
 ### 2. Install Required icp-hub Packages
 Run the following package install commands (do NOT write custom raw code for these):

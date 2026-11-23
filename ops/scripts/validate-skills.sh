@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Validate .agents/skills structure — run via: falcon skills:validate
+# Validate .agent/skills structure — run via: falcon skills:validate
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-SKILLS_ROOT="$ROOT/.agents/skills"
-INDEX="$ROOT/.agents/SKILLS.md"
+SKILLS_ROOT="$ROOT/.agent/skills"
+INDEX="$ROOT/.agent/SKILLS.md"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -80,7 +80,7 @@ ${name}:${index_key}"
   fi
 
   if ! echo "$INDEXED_LIST" | grep -qx "$index_key"; then
-    err "$index_key — not indexed in .agents/SKILLS.md"
+    err "$index_key — not indexed in .agent/SKILLS.md"
   fi
 
   lines="$(wc -l < "$skill_file")"
@@ -109,7 +109,12 @@ ${name}:${index_key}"
   while IFS= read -r link; do
     [[ -z "$link" ]] && continue
     if [[ "$link" == frontend/* ]]; then
-      target="$ROOT/frontend/.agents/$link/SKILL.md"
+      subpath="${link#frontend/}"
+      if [[ -f "$ROOT/frontend/.agent/skills/$subpath/SKILL.md" ]]; then
+        target="$ROOT/frontend/.agent/skills/$subpath/SKILL.md"
+      else
+        target="$ROOT/frontend/.agent/$subpath/SKILL.md"
+      fi
     else
       target="$SKILLS_ROOT/$link/SKILL.md"
     fi

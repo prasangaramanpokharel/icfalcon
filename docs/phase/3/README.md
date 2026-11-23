@@ -14,10 +14,10 @@
 
 | What | When to use | Skill | Hub packages |
 |---|---|---|---|
-| **Wallet** — accounts, deposit, balance | First login, deposit UI | [`walletStandard`](../../../.agents/skills/financeStandard/walletStandard/SKILL.md) | `subaccount`, `ledger`, `icrc1`, `wallet` |
-| **Transfer** — send ICP, fees, idempotency | Send form + confirm | [`transferStandard`](../../../.agents/skills/financeStandard/transferStandard/SKILL.md) | `transfer`, `transaction`, `icrc1` |
-| **Transaction** — history index | Tx list, reconciliation | [`transactionStandard`](../../../.agents/skills/financeStandard/transactionStandard/SKILL.md) | `transaction` |
-| **Hazards** — fees, double-credit | Any money code | [`ledgerIntegrationStandard`](../../../.agents/skills/motokoStandard/ledgerIntegrationStandard/SKILL.md) | — |
+| **Wallet** — accounts, deposit, balance | First login, deposit UI | [`walletStandard`](../../../.agent/skills/financeStandard/walletStandard/SKILL.md) | `subaccount`, `ledger`, `icrc1`, `wallet` |
+| **Transfer** — send ICP, fees, idempotency | Send form + confirm | [`transferStandard`](../../../.agent/skills/financeStandard/transferStandard/SKILL.md) | `transfer`, `transaction`, `icrc1` |
+| **Transaction** — history index | Tx list, reconciliation | [`transactionStandard`](../../../.agent/skills/financeStandard/transactionStandard/SKILL.md) | `transaction` |
+| **Hazards** — fees, double-credit | Any money code | [`ledgerIntegrationStandard`](../../../.agent/skills/motokoStandard/ledgerIntegrationStandard/SKILL.md) | — |
 
 ---
 
@@ -77,7 +77,7 @@ frontend/
 └── services/wallet/wallet.ts
 ```
 
-UI: [`frontendStandard`](../../../.agents/skills/frontendStandard/SKILL.md).
+UI: [`frontendStandard`](../../../.agent/skills/frontendStandard/SKILL.md).
 
 ---
 

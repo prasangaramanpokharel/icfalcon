@@ -28,7 +28,7 @@ IcFalcon is an open-source framework for Internet Computer applications: a produ
 | Backend | Motoko · `mo:core` · `api` → `service` → `repository` → `storage` |
 | Frontend | Next.js · shadcn/ui · Internet Identity · static export |
 | Packages | [icp-hub](https://github.com/prasangapokharel/icp-hub) — 90+ Motoko packages via `falcon add pkg` |
-| AI skills | `.agents/skills/` — task router at [`.agents/SKILLS.md`](.agents/SKILLS.md) |
+| AI skills | `.agent/skills/` — task router at [`.agent/SKILLS.md`](.agent/SKILLS.md) |
 
 ---
 
@@ -118,7 +118,7 @@ Use `--local` for the local replica. Omit for mainnet (deploy commands ask for c
 |---|---|
 | `falcon p:check --local` | Validate skills + build backend + frontend |
 | `falcon p:ship --local` | Deploy backend + build frontend |
-| `falcon sk:validate` | Validate `.agents/skills` structure and links |
+| `falcon sk:validate` | Validate `.agent/skills` structure and links |
 
 ### Scaffold & packages
 
@@ -161,7 +161,7 @@ falcon add pkg transfer
 falcon add pkg transaction
 ```
 
-Skills: [`.agents/SKILLS.md`](.agents/SKILLS.md) → Money core · AI-safe transfers (`aiActionsStandard`).
+Skills: [`.agent/SKILLS.md`](.agent/SKILLS.md) → Money core · AI-safe transfers (`aiActionsStandard`).
 
 ---
 
@@ -196,7 +196,7 @@ IcFalcon/
 │   └── scripts/        run-tests.sh
 ├── frontend/           Next.js + II + /wallet
 ├── ops/                falcon CLI, scaffolds, command docs
-├── .agents/skills/     AI task skills (*Standard)
+├── .agent/skills/     AI task skills (*Standard)
 ├── falcon.yaml         CLI config
 ├── AGENTS.md           contributor + agent map
 └── hub/                separate repo (gitignored) — icp-hub clone
@@ -214,7 +214,7 @@ IcFalcon/
 | CLI and templates | [docs/ops/README.md](docs/ops/README.md) |
 | Hub packages | [docs/packages/README.md](docs/packages/README.md) |
 | AI agents | [docs/agents/README.md](docs/agents/README.md) · [AGENTS.md](AGENTS.md) |
-| Skill router | [.agents/SKILLS.md](.agents/SKILLS.md) |
+| Skill router | [.agent/SKILLS.md](.agent/SKILLS.md) |
 | Command reference | [ops/docs/commands.md](ops/docs/commands.md) |
 
 ---

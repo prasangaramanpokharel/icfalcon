@@ -37,7 +37,7 @@ ops/
 IcFalcon/
 ├── backend/            # Motoko canister
 ├── frontend/           # Next.js app
-├── .agents/            # AI skills
+├── .agent/            # AI skills
 ├── ops/                # this folder
 ├── falcon.yaml            # CLI config
 ├── AGENTS.md

@@ -49,7 +49,7 @@ WalletService.getBalance(...) : async Nat
 TransferService.send(...) : async TransferResult
 ```
 
-`DepositInfo` must expose both ICRC-1 account and legacy account identifier — see [ledgerIntegration skill](../../../.agents/skills/motokoStandard/ledgerIntegrationStandard/SKILL.md).
+`DepositInfo` must expose both ICRC-1 account and legacy account identifier — see [ledgerIntegration skill](../../../.agent/skills/motokoStandard/ledgerIntegrationStandard/SKILL.md).
 
 ---
 
@@ -76,7 +76,7 @@ flowchart TD
 - [ ] `transaction` pkg — tx record types, history helpers
 - [ ] Upgrade `icrc1`, `icrc2`, `ledger`, `ckbtc` pkgs to L2 depth
 - [ ] Register all in [hub/index.json](../../../hub/index.json)
-- [ ] Skills: `walletStandard`, `transferStandard`, `transactionStandard` in `.agents/skills/financeStandard/`
+- [ ] Skills: `walletStandard`, `transferStandard`, `transactionStandard` in `.agent/skills/financeStandard/`
 - [ ] PocketIC / local ledger tests per money pkg
 - [ ] Push hub: `git push` in `hub/` repo
 

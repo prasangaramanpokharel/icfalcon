@@ -1,0 +1,14 @@
+{
+  "evals": [
+    {
+      "name": "server-only-db-boundary",
+      "prompt": "Show how to prevent a database module from leaking into client bundles using server-only and React taint.",
+      "expectedPattern": "import [\"']server-only[\"'][\\s\\S]*experimental_taint"
+    },
+    {
+      "name": "standalone-docker-config",
+      "prompt": "Configure next.config.ts for standalone Docker container deployment.",
+      "expectedPattern": "output:\\s*[\"']standalone[\"']"
+    }
+  ]
+}

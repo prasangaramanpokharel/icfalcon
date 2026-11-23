@@ -84,7 +84,7 @@ ${GREEN}Audit${NC} ${DIM}(black/flake8 style)${NC}
   a:c:m               Short alias
 
 ${GREEN}Skills${NC}
-  sk:validate     Validate .agents/skills structure (CI)
+  sk:validate     Validate .agent/skills structure (CI)
 
 ${GREEN}Canister${NC}
   c:status        Canister status

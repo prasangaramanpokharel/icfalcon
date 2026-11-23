@@ -283,7 +283,7 @@ flowchart TD
   H --> I[Refresh balance + history]
 ```
 
-UI: shadcn components per [`frontendStandard`](../../../.agents/skills/frontendStandard/SKILL.md).
+UI: shadcn components per [`frontendStandard`](../../../.agent/skills/frontendStandard/SKILL.md).
 
 **IDL:** extend `frontend/services/idl.ts` with wallet methods; keep in sync with Candid.
 
@@ -318,11 +318,11 @@ falcon m:f Wallet --wallet   # or falcon s:wallet-demo
 
 | Order | Skill | When |
 |---|---|---|
-| 1 | [`integrationStandard`](../../../.agents/skills/integrationStandard/SKILL.md) | Full feature checklist |
-| 2 | [`financeStandard/walletStandard`](../../../.agents/skills/financeStandard/walletStandard/SKILL.md) | Accounts, deposits |
-| 3 | [`financeStandard/transferStandard`](../../../.agents/skills/financeStandard/transferStandard/SKILL.md) | Sends, idempotency |
-| 4 | [`financeStandard/transactionStandard`](../../../.agents/skills/financeStandard/transactionStandard/SKILL.md) | History index |
-| 5 | [`motokoStandard/ledgerIntegrationStandard`](../../../.agents/skills/motokoStandard/ledgerIntegrationStandard/SKILL.md) | Hazards only |
+| 1 | [`integrationStandard`](../../../.agent/skills/integrationStandard/SKILL.md) | Full feature checklist |
+| 2 | [`financeStandard/walletStandard`](../../../.agent/skills/financeStandard/walletStandard/SKILL.md) | Accounts, deposits |
+| 3 | [`financeStandard/transferStandard`](../../../.agent/skills/financeStandard/transferStandard/SKILL.md) | Sends, idempotency |
+| 4 | [`financeStandard/transactionStandard`](../../../.agent/skills/financeStandard/transactionStandard/SKILL.md) | History index |
+| 5 | [`motokoStandard/ledgerIntegrationStandard`](../../../.agent/skills/motokoStandard/ledgerIntegrationStandard/SKILL.md) | Hazards only |
 
 Cross-link wallet section in `integrationStandard` → finance skills (exit criterion).
 
@@ -393,7 +393,7 @@ falcon b:deploy --local
 public let icpLedgerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
 ```
 
-Local replica may use a different ledger ID — document in [`guideStandard/localDeployStandard`](../../../.agents/skills/guideStandard/localDeployStandard/SKILL.md). Build must not require a running ledger; runtime calls fail gracefully with `ApiResult` errors.
+Local replica may use a different ledger ID — document in [`guideStandard/localDeployStandard`](../../../.agent/skills/guideStandard/localDeployStandard/SKILL.md). Build must not require a running ledger; runtime calls fail gracefully with `ApiResult` errors.
 
 ---
 
@@ -446,4 +446,4 @@ falcon p:check --local
 - [Phase 1 PLAN](../1/PLAN.md) — hub packages this app imports
 - [Phase 2 README](../2/README.md) — AI confirm guardrails
 - [AGENTS.md](../../../AGENTS.md) — finance standards table
-- [integrationStandard](../../../.agents/skills/integrationStandard/SKILL.md)
+- [integrationStandard](../../../.agent/skills/integrationStandard/SKILL.md)

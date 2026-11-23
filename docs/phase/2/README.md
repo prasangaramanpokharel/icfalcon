@@ -82,17 +82,17 @@ TransferRepo.markCompleted(store, transferId, receipt);
 3. User clicks Confirm → calls `executeTransfer(transferId, ...)`.
 4. `transferId` = client-generated UUID, stable across retry.
 
-Follow [frontendStandard](../../../.agents/skills/frontendStandard/SKILL.md) — shadcn confirm dialog.
+Follow [frontendStandard](../../../.agent/skills/frontendStandard/SKILL.md) — shadcn confirm dialog.
 
 ---
 
 ## Deliverables checklist
 
-- [ ] Skill: `.agents/skills/extensionsStandard/aiActions/SKILL.md`
+- [ ] Skill: `.agent/skills/extensionsStandard/aiActions/SKILL.md`
 - [ ] `TransferValidator.mo` pattern in integration skill
 - [ ] Idempotency storage in wallet feature template
 - [ ] Rate limits on transfer API via `mo:pkg/rate-limit/limit`
-- [ ] Entry in [.agents/SKILLS.md](../../../.agents/SKILLS.md) task router
+- [ ] Entry in [.agent/SKILLS.md](../../../.agent/SKILLS.md) task router
 - [ ] AI must load `ledgerIntegrationStandard` + `aiActions` before any money code
 
 ---

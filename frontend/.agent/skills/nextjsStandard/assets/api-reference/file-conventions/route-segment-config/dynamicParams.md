@@ -1,0 +1,40 @@
+---
+title: dynamicParams
+description: API reference for the dynamicParams route segment config option.
+url: "https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config/dynamicParams"
+docs_index: /docs/llms.txt
+lastUpdated: 2026-03-13
+prerequisites:
+  - "File-system conventions: /docs/app/api-reference/file-conventions"
+  - "Route Segment Config: /docs/app/api-reference/file-conventions/route-segment-config"
+---
+
+> For an index of all documentation, see [/docs/llms.txt](/docs/llms.txt).
+
+The `dynamicParams` option allows you to control what happens when a dynamic segment is visited that was not generated with [generateStaticParams](/docs/app/api-reference/functions/generate-static-params).
+
+**TypeScript**
+
+```tsx title="layout.tsx | page.tsx" 
+export const dynamicParams = true // true | false
+```
+
+**JavaScript**
+
+```js title="layout.js | page.js | route.js" 
+export const dynamicParams = true // true | false
+```
+
+- **`true`** (default): Dynamic route segments not included in `generateStaticParams` are generated at request time.
+- **`false`**: Dynamic route segments not included in `generateStaticParams` will return a 404.
+
+> **Good to know:**
+>
+> - This option replaces the `fallback: true | false | blocking` option of `getStaticPaths` in the `pages` directory.
+> - `dynamicParams` is not available when [Cache Components](/docs/app/api-reference/config/next-config-js/cacheComponents) is enabled.
+
+---
+
+For a semantic overview of all documentation, see [/sitemap.md](/sitemap.md)
+
+For an index of all available documentation, see [/docs/llms.txt](/docs/llms.txt)

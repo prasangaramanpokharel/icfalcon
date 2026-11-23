@@ -422,17 +422,17 @@ let balance = await ledger.icrc1_balance_of(account);
 
 | Skill | Path | Loads when |
 |---|---|---|
-| `walletStandard` | `.agents/skills/financeStandard/walletStandard/SKILL.md` | Creating wallet, deposit address |
-| `transferStandard` | `.agents/skills/financeStandard/transferStandard/SKILL.md` | Sending ICP/ICRC |
-| `transactionStandard` | `.agents/skills/financeStandard/transactionStandard/SKILL.md` | Tx history, reconciliation |
+| `walletStandard` | `.agent/skills/financeStandard/walletStandard/SKILL.md` | Creating wallet, deposit address |
+| `transferStandard` | `.agent/skills/financeStandard/transferStandard/SKILL.md` | Sending ICP/ICRC |
+| `transactionStandard` | `.agent/skills/financeStandard/transactionStandard/SKILL.md` | Tx history, reconciliation |
 
-Each skill must link to [ledgerIntegration](../../../.agents/skills/motokoStandard/ledgerIntegrationStandard/SKILL.md) and forbid:
+Each skill must link to [ledgerIntegration](../../../.agent/skills/motokoStandard/ledgerIntegrationStandard/SKILL.md) and forbid:
 - Ledger calls from `api/`
 - Balance stored as source of truth
 - Single row for internal transfers
 - `amount <= balance` without fee
 
-Register in [.agents/SKILLS.md](../../../.agents/SKILLS.md).
+Register in [.agent/SKILLS.md](../../../.agent/SKILLS.md).
 
 ---
 
@@ -540,5 +540,5 @@ falcon p:push subaccount
 
 - [Phase 1 README](README.md)
 - [Phase index](../README.md)
-- [ledgerIntegration skill](../../../.agents/skills/motokoStandard/ledgerIntegrationStandard/SKILL.md)
+- [ledgerIntegration skill](../../../.agent/skills/motokoStandard/ledgerIntegrationStandard/SKILL.md)
 - [hub/README.md](../../../hub/README.md)

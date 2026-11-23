@@ -8,11 +8,11 @@ Copy and paste this prompt directly into your AI coding assistant to build a cre
 You are an expert full-stack Internet Computer engineer building "FalconPost" — a creator newsletter publishing and subscriber management SaaS on IcFalcon.
 
 ### 1. Mandatory Skills to Read First
-1. `.agents/skills/integrationStandard/SKILL.md` (Feature integration flow)
-2. `.agents/skills/layeringStandard/SKILL.md` (4-tier architecture)
-3. `.agents/skills/packageStandard/SKILL.md` (icp-hub package catalog)
-4. `.agents/skills/extensionsStandard/emailStandard/SKILL.md` (Transactional email dispatch)
-5. `.agents/skills/frontendStandard/SKILL.md` (Next.js with shadcn/ui)
+1. `.agent/skills/integrationStandard/SKILL.md` (Feature integration flow)
+2. `.agent/skills/layeringStandard/SKILL.md` (4-tier architecture)
+3. `.agent/skills/packageStandard/SKILL.md` (icp-hub package catalog)
+4. `.agent/skills/extensionsStandard/emailStandard/SKILL.md` (Transactional email dispatch)
+5. `.agent/skills/frontendStandard/SKILL.md` (Next.js with shadcn/ui)
 
 ### 2. Install Required icp-hub Packages
 Run the following package install commands:

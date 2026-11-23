@@ -49,7 +49,7 @@ All notable changes to IcFalcon are documented here.
 - Motoko Code Validator & Linter (`ops/scripts/code/motoko/validate-code.sh` and `ops/scripts/motoko-validator.sh`)
 - `falcon audit code:motoko` and `falcon a:c:m` commands with auto-formatting (`--fix`) for trailing whitespace, CRLF, and EOF newlines
 - Motoko code auditing integrated into production pre-flight checks (`falcon p:check`)
-- `falconUniverseStandard` skill (`.agents/skills/falconUniverseStandard/SKILL.md`) for event-driven multi-canister architecture ("Kafka for Motoko")
+- `falconUniverseStandard` skill (`.agent/skills/falconUniverseStandard/SKILL.md`) for event-driven multi-canister architecture ("Kafka for Motoko")
 - `pkg/universe` package with transactional outbox, idempotent inbox sliding-window deduplication, and wildcard topic broker
 - High-throughput `mo:core/Queue` doubly-linked list backing for event outbox queue
 - Timer heartbeat integration (`Timer.setTimer` & `Timer.recurringTimer`) for automatic event flushing
@@ -59,8 +59,8 @@ All notable changes to IcFalcon are documented here.
 
 ### Added
 
-- `icpsdkStandard` skill (`.agents/skills/icpsdkStandard/SKILL.md`) covering complete `@icp-sdk/core`, `@icp-sdk/auth`, and `@icp-sdk/signer` ecosystem
-- `icpayControllerStandard` skill (`.agents/skills/icpayControllerStandard/SKILL.md`) for managing canister controllers via ICPay (icpay.app)
+- `icpsdkStandard` skill (`.agent/skills/icpsdkStandard/SKILL.md`) covering complete `@icp-sdk/core`, `@icp-sdk/auth`, and `@icp-sdk/signer` ecosystem
+- `icpayControllerStandard` skill (`.agent/skills/icpayControllerStandard/SKILL.md`) for managing canister controllers via ICPay (icpay.app)
 - Automated `mops` toolchain `moc` resolution in `ops/falcon` and `backend/scripts/run-tests.sh`
 - Support for `--wasm-memory-persistence keep` on upgrade deploys for Motoko enhanced orthogonal persistence
 - Official framework homepage linked at https://icpay.app/icfalcon
@@ -81,7 +81,7 @@ All notable changes to IcFalcon are documented here.
 - `falcon m:f <Name>` — Laravel-style module scaffolding
 - icp-hub integration (`falcon add pkg`, `falcon p:list`, lock file `backend/icp.pkg`)
 - Documentation under `docs/` (gettingStarted, backend, frontend, ops, packages, agents)
-- AI agent skills under `.agents/skills/` (integration, frontend, Motoko, deploy)
+- AI agent skills under `.agent/skills/` (integration, frontend, Motoko, deploy)
 - Internet Identity auth wiring on frontend
 - 62 local `backend/pkg/` modules + hub registry support
 

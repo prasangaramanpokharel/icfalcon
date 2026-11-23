@@ -21,7 +21,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    const authClient = new AuthClient({ identityProvider: iiUrl })
+    const authClient = new AuthClient({
+      identityProvider: {
+        authorizeUrl: iiUrl,
+        canisterId: process.env.NEXT_PUBLIC_II_CANISTER_ID ?? "rdmx6-jaaaa-aaaaa-aaadq-cai",
+      },
+    })
     setClient(authClient)
     if (authClient.isAuthenticated()) {
       authClient

@@ -1,0 +1,19 @@
+{
+  "evals": [
+    {
+      "name": "add-dashboard-block",
+      "prompt": "Install the standard dashboard block and the button component into this Next.js project with confirmation bypassed.",
+      "expectedCommand": "npx shadcn@latest add dashboard-01 button -y"
+    },
+    {
+      "name": "fetch-dialog-mdx",
+      "prompt": "Retrieve the official MDX specification for the Dialog component.",
+      "expectedCommand": "python3 skills/frontend/shadcn-ui/scripts/fetchComponentDocs.py --component dialog"
+    },
+    {
+      "name": "add-ai-reasoning-and-prompt",
+      "prompt": "Add the reasoning chain-of-thought and prompt-input AI components to the project.",
+      "expectedCommand": "npx shadcn@latest add @ai-elements/reasoning @ai-elements/prompt-input -y"
+    }
+  ]
+}

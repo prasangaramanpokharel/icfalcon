@@ -50,4 +50,4 @@ falcon p:check --local
 2. **Orthogonal Persistence**: Motoko `persistent actor` ensures memory state survives canister upgrades automatically.
 3. **Decoupled Event Mesh**: High-throughput inter-canister communication via Falcon Universe pub/sub messaging.
 4. **Zero Legacy Dependencies**: Pure `@icp-sdk` on frontend and `mo:core` (2.x) on backend.
-5. **AI-Ready Standards**: Complete library of 52 structured skills in `.agents/skills/` for AI pair programming.
+5. **AI-Ready Standards**: Complete library of 52 structured skills in `.agent/skills/` for AI pair programming.

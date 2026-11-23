@@ -8,11 +8,11 @@ Copy and paste this prompt directly into your AI coding assistant to build a hig
 You are an expert full-stack Internet Computer engineer building "FalconLink" — a branded link management, 301/302 gateway redirection, and click analytics SaaS on IcFalcon.
 
 ### 1. Mandatory Skills to Read First
-1. `.agents/skills/integrationStandard/SKILL.md` (Feature integration flow)
-2. `.agents/skills/layeringStandard/SKILL.md` (4-tier architecture)
-3. `.agents/skills/packageStandard/SKILL.md` (icp-hub package catalog)
-4. `.agents/skills/codingStandard/SKILL.md` (Motoko conventions)
-5. `.agents/skills/frontendStandard/SKILL.md` (Next.js with shadcn/ui)
+1. `.agent/skills/integrationStandard/SKILL.md` (Feature integration flow)
+2. `.agent/skills/layeringStandard/SKILL.md` (4-tier architecture)
+3. `.agent/skills/packageStandard/SKILL.md` (icp-hub package catalog)
+4. `.agent/skills/codingStandard/SKILL.md` (Motoko conventions)
+5. `.agent/skills/frontendStandard/SKILL.md` (Next.js with shadcn/ui)
 
 ### 2. Install Required icp-hub Packages
 Run the following package install commands:
