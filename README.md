@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="frontend/public/brand/logo.png" alt="IcFalcon" width="280" />
+  <img src="https://icpay.cloud/images/logo/icfalcon/icfalcon.png" alt="IcFalcon" width="280" />
 </p>
 
 <h1 align="center">IcFalcon</h1>

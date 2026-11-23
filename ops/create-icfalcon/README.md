@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://icpay.cloud/images/logo/icfalcon/icfalcon.png" alt="IcFalcon" width="220" />
+</p>
+
 # create-icfalcon
 
 Scaffold an [IcFalcon](https://github.com/prasangaramanpokharel/icfalcon) app — Motoko backend, Next.js frontend, `falcon` CLI.
