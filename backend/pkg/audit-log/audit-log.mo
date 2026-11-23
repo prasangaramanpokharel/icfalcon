@@ -33,7 +33,7 @@ module {
       targetResource : Text,
       targetId : ?Text,
       status : Status,
-      details : Text
+      details : Tex
     ) : Entry {
       let entry : Entry = {
         id = nextId;

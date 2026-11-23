@@ -28,8 +28,13 @@ syntax error [M0001], unexpected token '<name>', expected one of token or <phras
 
 Rename rather than escape — no quoting mechanism. Conventional renames:
 `query` → `request` / `searchTerm`, `label` → `caption` / `tag`,
-`type` → `kind` / `category`, `object` → `item` / `entity`,
+`type` → `kind` / `category`, `object` → `item` / `entity` / `obj`,
 `class` → `group`.
+
+### Strict Variant & Function Name Rules:
+- **Never use `#debug` as a variant tag**: `debug` is an expression keyword in Motoko. Motoko parser rejects bare `#debug`. Use `#dbg` or `#Debug`.
+- **Never name a function `object`**: `object` is an expression keyword (`object { ... }`). Use `func obj` or `func item`.
+- **Never use `type` or `query` as field names**: Use `kind` or `category`, `request` or `searchTerm`.
 
 ## Not reserved
 

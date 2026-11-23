@@ -38,9 +38,13 @@ falcon audit code:motoko --all
 - **Pure Validators**: `validators/` modules must be pure calculation functions and cannot import `repositories/`, `storage/`, `services/`, or `ledger/`.
 - **Downward Dependency Flow**: `storage/` and `repositories/` cannot import `services/` or `api/`.
 
-### 3. Deprecated Library Ban
+### 3. Deprecated Library & mo:core API Standards
 - Strictly forbids importing `mo:base`.
 - Enforces modern `mo:core` (2.x) with contextual method calls (e.g. `map.get(k)`).
+- **Array API**: Forbids `Array.append` (use `Array.concat<T>`) and `Array.subArray` (use `Array.sliceToArray<T>`).
+- **Text API**: Forbids `Text.toLowercase`/`toUppercase` (use `Text.toLower`/`Text.toUpper`) and `Text.substring` (use `Iter.take`/char iterators).
+- **Reserved Keywords**: Forbids `#debug` variant tag (use `#dbg` or `#Debug`).
+- **Modern Converters**: Warns on deprecated `Array.fromIter` (prefer `Iter.toArray`) and `Array.fromVarArray` (prefer `VarArray.toArray`).
 
 ### 4. File Size Limits
 - Emits a warning when any file exceeds **300 lines**.

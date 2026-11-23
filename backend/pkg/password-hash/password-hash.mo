@@ -60,7 +60,7 @@ module {
     let bChars = Iter.toArray(Text.toIter(b));
     let aLen = aChars.size();
     let bLen = bChars.size();
-    
+
     var diff : Nat = if (aLen == bLen) 0 else 1;
     let minLen = if (aLen < bLen) aLen else bLen;
     var i : Nat = 0;

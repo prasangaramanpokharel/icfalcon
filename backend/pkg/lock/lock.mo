@@ -20,7 +20,7 @@ module {
     locks : LockManager,
     resourceKey : Text,
     owner : Principal,
-    ttlNanos : Int
+    ttlNanos : In
   ) : Bool {
     let now = Time.now();
     switch (Map.get(locks, Text.compare, resourceKey)) {

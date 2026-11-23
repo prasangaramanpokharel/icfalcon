@@ -2,6 +2,14 @@
 
 All notable changes to IcFalcon are documented here.
 
+## [0.3.3] - 2026-11-23
+
+### Added
+- **AI-Guaranteed `mo:core` Standard Rules**: Documented authoritative `mo:core` (2.x) API lookup table in `.agent/skills/codingStandard/SKILL.md` (methods for strings, arrays, iterators, and converters).
+- **Automated AI Linter Checks**: Enhanced `falcon audit code:motoko` (`validate-code.sh`) to automatically detect and flag deprecated/removed `mo:base` methods (`Array.append`, `Array.subArray`, `Text.toLowercase`, `Text.toUppercase`, `Text.substring`, `Array.fromIter`, and `#debug` keyword collisions).
+- **Language Guardrail Documentation**: Formulated explicit AI warning sections for Motoko reserved words (`#debug`, `func object`), `var` record mutability (`M0179`), and async return shareability (`M0033`).
+- **Cleaned Package Whitespace**: Auto-fixed all trailing whitespace across all 137 Motoko backend files.
+
 ## [0.3.2] - 2026-11-23
 
 ### Fixed

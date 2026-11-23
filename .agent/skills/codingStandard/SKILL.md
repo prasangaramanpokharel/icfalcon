@@ -30,6 +30,24 @@ treats the value as a plain record.
 
 ---
 
+## mo:core (2.x) API Rules
+
+When writing Motoko using `mo:core` (2.x), always use modern standard library methods. Never use removed `mo:base` patterns:
+
+| Operation | Standard (`mo:core`) | Forbidden (`mo:base` / legacy) | Notes |
+|---|---|---|---|
+| String lowercase | `Text.toLower(t)` | `Text.toLowercase(t)` | Method is `toLower`, not `toLowercase` |
+| String uppercase | `Text.toUpper(t)` | `Text.toUppercase(t)` | Method is `toUpper`, not `toUppercase` |
+| Substring / slice | `Iter.take(t.chars(), n)` | `Text.substring(t, start, len)` | `Text` has no `substring` in `mo:core`; use char iterators + `Text.fromIter` |
+| Join strings | `Text.join(iter, sep)` | `Text.join(sep, iter)` | First argument is iterator, second argument is separator |
+| Array concat | `Array.concat<T>(a, b)` | `Array.append(a, b)` | `Array.append` is removed/deprecated |
+| Array slice | `Array.sliceToArray<T>(a, i, j)` | `Array.subArray(a, i, j)` | `Array.subArray` is removed/deprecated |
+| Iter to Array | `Iter.toArray(iter)` | `Array.fromIter(iter)` | `Array.fromIter` is deprecated in favor of `Iter.toArray` |
+| VarArray to Array | `VarArray.toArray(varArr)` | `Array.fromVarArray(varArr)` | `Array.fromVarArray` is deprecated in favor of `VarArray.toArray` |
+| List | `mo:core/List` or `mo:core/pure/List` | `mo:base/List` | Use `list.add` / `list.put`, never `push` |
+
+---
+
 ## File and module layout
 
 ```
@@ -164,22 +182,49 @@ Getting this wrong **silently wipes mainnet data** on upgrade.
 
 ---
 
-## Reserved keywords as field names
+## Reserved keywords & naming restrictions
 
-Never use as record fields: `label`, `type`, `object`, `actor`, `query`,
-`shared`, `switch`, `case`, `func`, `module`.
+Never use reserved Motoko keywords as identifiers — variable, function, record field, parameter, or variant tag:
+`actor`, `and`, `assert`, `async`, `async*`, `await`, `await*`, `break`, `case`, `catch`, `class`, `composite`, `continue`, `debug`, `debug_show`, `do`, `else`, `false`, `finally`, `for`, `func`, `if`, `ignore`, `import`, `in`, `label`, `let`, `loop`, `mixin`, `module`, `not`, `null`, `object`, `or`, `persistent`, `private`, `public`, `query`, `return`, `shared`, `stable`, `switch`, `system`, `throw`, `transient`, `true`, `try`, `type`, `var`, `while`, `with`.
 
-Error looks like `M0001 unexpected token` at a misleading column.
+### Common AI traps to avoid:
+1. **Never use `#debug` as a variant tag**: `debug` is a reserved expression keyword in Motoko. Use `#dbg` or `#Debug`.
+2. **Never name functions `object`**: `object` is a reserved keyword (`object { ... }`). Use `func obj` or `func item`.
+3. **Never name record fields `type` or `query`**: Use `kind` or `category`, `request` or `searchTerm`.
 
 ---
 
-## Records and updates
+## Records, mutability, and functional updates
 
-Prefer spread over manual copy:
+1. **Constructing records with mutable fields**:
+   When constructing a record that declares `var field : T`, record construction MUST explicitly prefix with `var`:
+   ```motoko
+   public type Job = { id : Nat; var status : JobStatus };
+   let job : Job = { id = 1; var status = #pending }; // 'var' is required!
+   ```
 
-```motoko
-{ user with var displayName = name; var updatedAt = Time.now() }
-```
+2. **Functional record updates `{ record with ... }`**:
+   Motoko does NOT allow functional updates if the record has un-overwritten `var` fields (error `M0179: base has non-aliasable var field`).
+   - Domain models that undergo functional updates should keep fields immutable (`status : Status`), returning updated copies.
+   - If a record has mutable fields, mutate them in place (`record.status := #completed`) or overwrite ALL `var` fields in the `with` expression.
+
+3. **Prefer spread over manual copy for immutable records**:
+   ```motoko
+   { user with displayName = name; updatedAt = Time.now() }
+   ```
+
+---
+
+## Async return typing & shareability (`M0033`)
+
+In Motoko, both `async T` and `async* T` return types strictly require `T` to be a **shared type** (`Shareability`).
+- Primitive types (`Text`, `Nat`, `Int`, `Bool`, `Principal`, `Blob`) and immutable records/variants/arrays of shared types are shared.
+- Unconstrained generic type parameters (e.g. `<T>`) are **NOT** known to be shared!
+- **AI Trap**: Do NOT write generic async utility functions returning unconstrained `async Result<T>` or `async* T` (causes compiler error `M0033: async has non-shared content type`). Always specialize async utility functions to concrete shared types (e.g. `async Result<Text>`, `async Bool`, `async ()`).
+
+---
+
+## Error handling patterns
 
 Variant checks:
 

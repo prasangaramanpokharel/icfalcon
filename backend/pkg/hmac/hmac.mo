@@ -20,7 +20,7 @@ module {
     let bChars = Iter.toArray(Text.toIter(b));
     let aSize = aChars.size();
     let bSize = bChars.size();
-    
+
     var diff : Nat = if (aSize == bSize) 0 else 1;
     let minLen = if (aSize < bSize) aSize else bSize;
     var i : Nat = 0;

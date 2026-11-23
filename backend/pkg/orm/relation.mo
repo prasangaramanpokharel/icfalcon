@@ -9,7 +9,7 @@ module {
     parent : Parent,
     parentKey : Parent -> Types.RecordId,
     childTable : Table.Table<Child>,
-    foreignKeyIndexName : Text
+    foreignKeyIndexName : Tex
   ) : [Child] {
     let pKey = parentKey(parent);
     childTable.findManyByIndex(foreignKeyIndexName, pKey);
@@ -20,7 +20,7 @@ module {
     parent : Parent,
     parentKey : Parent -> Types.RecordId,
     childTable : Table.Table<Child>,
-    foreignKeyIndexName : Text
+    foreignKeyIndexName : Tex
   ) : ?Child {
     let pKey = parentKey(parent);
     let children = childTable.findManyByIndex(foreignKeyIndexName, pKey);
@@ -54,7 +54,7 @@ module {
     };
   };
 
-  // Cascades delete: deletes all referencing child records, then deletes the parent
+  // Cascades delete: deletes all referencing child records, then deletes the paren
   public func deleteCascade<Parent, Child>(
     parentTable : Table.Table<Parent>,
     parentId : Types.RecordId,
@@ -77,12 +77,12 @@ module {
     };
   };
 
-  // Restricts delete: prevents parent deletion if any child records reference it
+  // Restricts delete: prevents parent deletion if any child records reference i
   public func deleteRestrict<Parent, Child>(
     parentTable : Table.Table<Parent>,
     parentId : Types.RecordId,
     childTable : Table.Table<Child>,
-    foreignKeyIndexName : Text
+    foreignKeyIndexName : Tex
   ) : Result.Result<Parent, Text> {
     let children = childTable.findManyByIndex(foreignKeyIndexName, parentId);
     if (children.size() > 0) {

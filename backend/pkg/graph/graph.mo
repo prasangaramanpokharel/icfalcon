@@ -9,7 +9,7 @@ module {
   public class DirectedGraph() {
     // Adjacency list: fromNode -> Set of toNodes
     private let adjacency = Map.empty<Text, Set.Set<Text>>();
-    // In-degree tracking: node -> count
+    // In-degree tracking: node -> coun
     private let inDegrees = Map.empty<Text, Nat>();
 
     public func addNode(node : Text) : () {

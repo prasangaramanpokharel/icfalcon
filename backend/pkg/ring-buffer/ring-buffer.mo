@@ -7,7 +7,7 @@ module {
   public class RingBuffer<T>(capLimit : Nat, defaultVal : T) {
     private let capacity : Nat = if (capLimit == 0) 1 else capLimit;
     private let buffer : [var T] = VarArray.repeat<T>(defaultVal, capacity);
-    private var head : Nat = 0; // insertion point
+    private var head : Nat = 0; // insertion poin
     private var count : Nat = 0;
 
     public func size() : Nat {

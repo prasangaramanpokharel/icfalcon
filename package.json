@@ -1,6 +1,6 @@
 {
   "name": "icfalcon",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Internet Computer app framework: Motoko backend, Next.js frontend, falcon ops CLI.",
   "license": "MIT",
   "author": "prasangapokharel",

@@ -200,9 +200,33 @@ for file in "${MO_FILES[@]}"; do
     warn "$file_rel — File has $line_count lines (prefer <300 lines; split into domain folder + facade)"
   fi
 
-  # --- Check 3: Deprecated Libraries ---
+  # --- Check 3: Deprecated Libraries & mo:core API Standards ---
   if grep -qE 'import[[:space:]]+[A-Za-z0-9_]+[[:space:]]+"mo:base' "$file" 2>/dev/null; then
     err "$file_rel — Uses deprecated 'mo:base'. Must use 'mo:core' (2.x)"
+  fi
+  if grep -qE 'Array\.append[[:space:]]*\(' "$file" 2>/dev/null; then
+    err "$file_rel — Uses deprecated/removed 'Array.append'. Must use 'Array.concat<T>' (mo:core 2.x)"
+  fi
+  if grep -qE 'Array\.subArray[[:space:]]*\(' "$file" 2>/dev/null; then
+    err "$file_rel — Uses deprecated/removed 'Array.subArray'. Must use 'Array.sliceToArray<T>' (mo:core 2.x)"
+  fi
+  if grep -qE 'Text\.toLowercase[[:space:]]*\(' "$file" 2>/dev/null; then
+    err "$file_rel — Uses non-existent 'Text.toLowercase'. Must use 'Text.toLower' (mo:core 2.x)"
+  fi
+  if grep -qE 'Text\.toUppercase[[:space:]]*\(' "$file" 2>/dev/null; then
+    err "$file_rel — Uses non-existent 'Text.toUppercase'. Must use 'Text.toUpper' (mo:core 2.x)"
+  fi
+  if grep -qE 'Text\.substring[[:space:]]*\(' "$file" 2>/dev/null; then
+    err "$file_rel — Uses non-existent 'Text.substring'. Use char iterators + 'Iter.take' (mo:core 2.x)"
+  fi
+  if grep -qE '#debug([[:space:];,\)]|$)' "$file" 2>/dev/null; then
+    err "$file_rel — Variant tag #debug collides with reserved Motoko keyword. Use #dbg or #Debug"
+  fi
+  if grep -qE 'Array\.fromIter[[:space:]]*(<|\()' "$file" 2>/dev/null; then
+    warn "$file_rel — Uses deprecated 'Array.fromIter'. Prefer 'Iter.toArray' (mo:core 2.x)"
+  fi
+  if grep -qE 'Array\.fromVarArray[[:space:]]*(<|\()' "$file" 2>/dev/null; then
+    warn "$file_rel — Uses deprecated 'Array.fromVarArray'. Prefer 'VarArray.toArray' (mo:core 2.x)"
   fi
 
   # --- Check 4: Architecture Layering Rules ---
