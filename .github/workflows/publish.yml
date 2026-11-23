@@ -1,0 +1,75 @@
+name: Publish to NPM
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish Packages to NPM
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Check and Publish Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "::warning::NPM_TOKEN secret is not configured in repository secrets. Skipping auto-publish."
+            exit 0
+          fi
+
+          # 1. Publish icfalcon
+          LOCAL_VER=$(node -p "require('./package.json').version")
+          NPM_VER=$(npm view icfalcon version 2>/dev/null || echo "none")
+
+          echo "icfalcon local: $LOCAL_VER, npm: $NPM_VER"
+          if [ "$LOCAL_VER" != "$NPM_VER" ]; then
+            echo "Publishing icfalcon@$LOCAL_VER..."
+            npm publish --access public
+            echo "Successfully published icfalcon@$LOCAL_VER"
+          else
+            echo "icfalcon@$LOCAL_VER is already published on npm."
+          fi
+
+          # 2. Publish create-icfalcon
+          cd ops/create-icfalcon
+          LOCAL_CREATE_VER=$(node -p "require('./package.json').version")
+          NPM_CREATE_VER=$(npm view create-icfalcon version 2>/dev/null || echo "none")
+
+          echo "create-icfalcon local: $LOCAL_CREATE_VER, npm: $NPM_CREATE_VER"
+          if [ "$LOCAL_CREATE_VER" != "$NPM_CREATE_VER" ]; then
+            echo "Publishing create-icfalcon@$LOCAL_CREATE_VER..."
+            npm publish --access public
+            echo "Successfully published create-icfalcon@$LOCAL_CREATE_VER"
+          else
+            echo "create-icfalcon@$LOCAL_CREATE_VER is already published on npm."
+          fi
+          cd ../..
+
+          # 3. Create Git tag and GitHub release if not existing
+          TAG="v$LOCAL_VER"
+          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Creating release $TAG..."
+            gh release create "$TAG" --title "$TAG" --generate-notes
+          fi
