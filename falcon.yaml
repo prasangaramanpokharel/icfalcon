@@ -11,6 +11,14 @@ commands:
     confirm: false
     script: ops/scripts/setup-init.sh
 
+  setup:update:
+    confirm: false
+    script: ops/scripts/framework-update.sh
+
+  update:
+    confirm: false
+    script: ops/scripts/framework-update.sh
+
   replica:start:
     confirm: false
     script: ops/scripts/replica-start.sh
@@ -304,6 +312,9 @@ commands:
 aliases:
   # setup
   s:init: setup:init
+  s:update: setup:update
+  s:up: setup:update
+  up: update
   r:start: replica:start
   r:stop: replica:stop
   # backend

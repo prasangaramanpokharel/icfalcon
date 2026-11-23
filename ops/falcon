@@ -65,6 +65,7 @@ Usage:
 
 ${GREEN}Setup${NC}
   s:init          Full local setup + dev server
+  s:update        Update framework, packages & CLI (alias: update, up)
   r:start         Start local replica
   r:stop          Stop local replica
 
