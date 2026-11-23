@@ -2,6 +2,21 @@
 
 All notable changes to IcFalcon are documented here.
 
+## [0.3.0] - 2026-11-23
+
+### Added
+- **Native `icp-cli` Toolchain**: Migrated build, network, and deployment pipelines from legacy `dfx` to native `icp-cli` (`v1.8.0`) with `icp.yaml` and PocketIC test networks.
+- **Zero-Failure Local Auto-Deploy (`falcon b:deploy --local`)**: Automatically detects local test network status, kills stale processes, starts background network on port 8000, and deploys without manual intervention.
+- **Full-Stack Env Synchronization**: Local backend deployments automatically update `frontend/.env.local` with the active canister ID and host (`http://127.0.0.1:8000`).
+- **Interactive Cycles Funding (`falcon y:fund` / `falcon cycles:fund`)**: Minimal, formal terminal prompt displaying required ICP, Account ID, Principal, and a high-contrast UTF-8 QR code for scanning from mobile wallets (Plug, Bitfinity, Oisy, NNS), with interactive auto-deploy on confirmation (`I have sent [y/N]`).
+- **Multi-Token Swap Standard (`swapStandard`)**: Formal protocol for multi-token AMM trading (ICP, ckBTC, ckETH, ckUSDC, ICRC tokens) with pre-flight liquidity depth checks, slippage bounds, comprehensive three-part fee breakdown, and ICRC-2 delegation flows.
+- **AI Safety Guardrails (`restrictionStandard`)**: Strict rules prohibiting autonomous execution of destructive commands (`canister:delete`, `--mode=reinstall`, wasm state wipes, identity deletion) without explicit bold user confirmation (`CONFIRM EXECUTE`).
+- **Authoritative Full-Stack Deploy Standard (`deployStandard`)**: Comprehensive root standard detailing end-to-end deployment runbooks for backend Motoko and Next.js frontend across local and mainnet environments.
+
+### Fixed
+- **Clean Artifacts & Legacy Removal**: Deleted obsolete `backend/.dfx/` and empty root `testing/` directories.
+- **Deprecation Warnings**: Resolved all `dfx is deprecated` warnings by routing canister operations (`c:status`, `c:ping`, `c:id`) through native `icp-cli`.
+
 ## [0.2.5] - 2026-09-28
 
 ### Fixed

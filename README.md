@@ -67,7 +67,7 @@ Installs the CLI, sets up backend + frontend, deploys locally, and starts the de
 **Option B — git clone**
 
 ```bash
-git clone https://gitlab.com/prasangapokharel/icfalcon.git
+git clone https://github.com/prasangaramanpokharel/icfalcon.git
 cd IcFalcon
 ./ops/install.sh
 falcon s:init
