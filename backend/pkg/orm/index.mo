@@ -274,7 +274,7 @@ module {
     };
 
     public func all() : [T] {
-      Array.fromIter<T>(Map.values(store));
+      Iter.toArray<T>(Map.values(store));
     };
 
     public func count() : Nat {

@@ -2,6 +2,18 @@
 
 All notable changes to IcFalcon are documented here.
 
+## [0.3.2] - 2026-11-23
+
+### Fixed
+- **`mo:core@2.6.1` Package Alignment**: Conducted comprehensive audit of all packages under `backend/pkg/` against `backend/.mops/core@2.6.1/src/`.
+- **String & Text Operations**: Migrated `Text.toLowercase` and `Text.toUppercase` to `Text.toLower` and `Text.toUpper`; replaced non-existent `Text.substring` with idiomatic `Iter.take` and char iterators (`slug`, `string`).
+- **Array Operations**: Replaced deprecated `Array.append` with `Array.concat<T>` across `array`, `blob`, `indexer`, `multisig`, and `upload`.
+- **Iterator & VarArray Modernization**: Migrated `Array.fromIter` to `Iter.toArray` in `orm/index` and `Array.fromVarArray` to `VarArray.toArray` in `orm/query`.
+- **Record Construction & Mutability**: Fixed `var` field initialization in `job-queue` and `dead-letter-queue`; aligned functional record updates in `dao`, `escrow`, and `upload`.
+- **Reserved Keywords**: Renamed keyword-colliding function `object` to `obj` in `json` and keyword variant `#debug` to `#dbg` in `logger`.
+- **Async Function Typing**: Specialized generic async boundaries in `retry` and `saga` to concrete shared types satisfying Motoko's `shared` return constraint.
+- **Compiler Cleanliness**: Eliminated all unused imports and variables across backend packages.
+
 ## [0.3.1] - 2026-11-23
 
 ### Changed

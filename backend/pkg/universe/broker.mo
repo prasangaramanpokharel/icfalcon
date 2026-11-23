@@ -1,5 +1,4 @@
 import Array "mo:core/Array";
-import Principal "mo:core/Principal";
 import Text "mo:core/Text";
 import Types "./types";
 
@@ -19,7 +18,7 @@ module {
       return true;
     };
     if (Text.endsWith(pattern, #text ".*")) {
-      var parts = Text.split(pattern, #text ".*");
+      let parts = Text.split(pattern, #text ".*");
       switch (parts.next()) {
         case (?prefix) {
           if (Text.startsWith(topic, #text prefix)) {

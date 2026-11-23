@@ -3,7 +3,6 @@ import Int "mo:core/Int";
 import Text "mo:core/Text";
 import Time "mo:core/Time";
 import Queue "mo:core/Queue";
-import Array "mo:core/Array";
 
 module {
   public type JobStatus = {
@@ -34,11 +33,11 @@ module {
       let job : Job<Payload> = {
         id;
         payload;
-        status = #pending;
-        attempts = 0;
+        var status = #pending;
+        var attempts = 0;
         maxRetries;
         createdAt = now;
-        nextRunAt = now + delayNanos;
+        var nextRunAt = now + delayNanos;
       };
       Queue.pushBack(jobs, job);
       id;
@@ -49,40 +48,41 @@ module {
       for (job in Queue.toArray(jobs).values()) {
         switch (job.status) {
           case (#pending) {
-            if (now >= job.nextRunAt) {
+            if (job.nextRunAt <= now) {
               job.status := #processing;
-              job.attempts += 1;
               return ?job;
             };
           };
-          case (_) ();
+          case (_) {};
         };
       };
       null;
     };
 
-    public func markComplete(jobId : Nat) : Bool {
+    public func complete(id : Nat) : Bool {
+      updateStatus(id, #completed);
+    };
+
+    public func fail(id : Nat, reason : Text, backoffNanos : Int) : Bool {
       for (job in Queue.toArray(jobs).values()) {
-        if (job.id == jobId) {
-          job.status := #completed;
+        if (job.id == id) {
+          job.attempts += 1;
+          if (job.attempts >= job.maxRetries) {
+            job.status := #failed(reason);
+          } else {
+            job.status := #pending;
+            job.nextRunAt := Time.now() + backoffNanos;
+          };
           return true;
         };
       };
       false;
     };
 
-    public func markFailed(jobId : Nat, reason : Text, backoffBaseNanos : Int) : Bool {
-      let now = Time.now();
+    private func updateStatus(id : Nat, newStatus : JobStatus) : Bool {
       for (job in Queue.toArray(jobs).values()) {
-        if (job.id == jobId) {
-          if (job.attempts < job.maxRetries) {
-            job.status := #pending;
-            // Linear/exponential backoff increment
-            let delay = backoffBaseNanos * Int.abs(job.attempts);
-            job.nextRunAt := now + delay;
-          } else {
-            job.status := #failed(reason);
-          };
+        if (job.id == id) {
+          job.status := newStatus;
           return true;
         };
       };
@@ -91,6 +91,10 @@ module {
 
     public func size() : Nat {
       Queue.size(jobs);
+    };
+
+    public func clear() : () {
+      Queue.clear(jobs);
     };
   };
 };

@@ -1,5 +1,4 @@
 import Nat "mo:core/Nat";
-import Int "mo:core/Int";
 
 module {
   public func percent(part : Nat, total : Nat) : Nat {

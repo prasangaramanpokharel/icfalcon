@@ -1,5 +1,4 @@
 import Array "mo:core/Array";
-import Text "mo:core/Text";
 import Types "./types";
 
 module {
@@ -31,7 +30,7 @@ module {
       return false;
     };
 
-    var current = inbox.processed;
+    let current = inbox.processed;
     if (current.size() >= inbox.maxCapacity and inbox.maxCapacity > 0) {
       let trimmed = Array.sliceToArray<Types.EventId>(current, 1, current.size());
       inbox.processed := Array.concat<Types.EventId>(trimmed, [id]);

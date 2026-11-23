@@ -7,7 +7,7 @@ module {
     var i = 0;
     while (i < items.size()) {
       let end = if (i + size > items.size()) items.size() else i + size;
-      out := Array.append(out, [Array.tabulate(end - i, func(j : Nat) { items[i + j] })]);
+      out := Array.concat<[T]>(out, [Array.tabulate<T>(end - i, func(j : Nat) { items[i + j] })]);
       i += size;
     };
     out;
@@ -15,8 +15,9 @@ module {
   public func unique<T>(items : [T], eq : (T, T) -> Bool) : [T] {
     var out : [T] = [];
     for (item in items.vals()) {
-      if (Array.find(out, func(x : T) : Bool { eq(x, item) }) == null) {
-        out := Array.append(out, [item]);
+      switch (Array.find<T>(out, func(x : T) : Bool { eq(x, item) })) {
+        case (null) { out := Array.concat<T>(out, [item]) };
+        case (?_) {};
       };
     };
     out;

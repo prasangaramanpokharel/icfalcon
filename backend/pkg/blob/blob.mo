@@ -8,12 +8,12 @@ module {
     var i = 0;
     while (i < data.size()) {
       let end = if (i + size > data.size()) data.size() else i + size;
-      out := Array.append(out, [Array.tabulate(end - i, func(j : Nat) { data[i + j] })]);
+      out := Array.concat<[Nat8]>(out, [Array.tabulate<Nat8>(end - i, func(j : Nat) { data[i + j] })]);
       i += size;
     };
     out;
   };
   public func join(chunks : [[Nat8]]) : [Nat8] {
-    Array.flatten(chunks);
+    Array.flatten<Nat8>(chunks);
   };
 };

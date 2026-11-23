@@ -1,10 +1,11 @@
 import Text "mo:core/Text";
+import Nat "mo:core/Nat";
 
 module {
   public func string(value : Text) : Text { "\"" # escape(value) # "\"" };
   public func number(n : Nat) : Text { Nat.toText(n) };
   public func bool(b : Bool) : Text { if (b) "true" else "false" };
-  public func object(fields : [(Text, Text)]) : Text {
+  public func obj(fields : [(Text, Text)]) : Text {
     "{" # joinFields(fields) # "}";
   };
   func escape(t : Text) : Text { t };

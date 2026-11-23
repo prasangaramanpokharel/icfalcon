@@ -128,14 +128,14 @@ module {
     private var elements : [T] = [];
 
     public func push(item : T) {
-      elements := Array.append(elements, [item]);
+      elements := Array.concat<T>(elements, [item]);
     };
 
     public func pop() : ?T {
       if (elements.size() == 0) { null }
       else {
         let last = elements[elements.size() - 1];
-        elements := Array.subArray(elements, 0, elements.size() - 1);
+        elements := Array.sliceToArray<T>(elements, 0, elements.size() - 1);
         ?last;
       };
     };

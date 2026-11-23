@@ -1,6 +1,10 @@
+import Nat "mo:core/Nat";
+import Text "mo:core/Text";
+
 module {
   public type Result<T> = { #ok : T; #err : Text };
-  public func withRetry<T>(attempts : Nat, run : () -> async Result<T>) : async Result<T> {
+
+  public func withRetry(attempts : Nat, run : () -> async Result<Text>) : async Result<Text> {
     var left = attempts;
     var last = "";
     while (left > 0) {
@@ -10,5 +14,14 @@ module {
       };
     };
     #err(last);
+  };
+
+  public func retryBool(attempts : Nat, run : () -> async Bool) : async Bool {
+    var left = attempts;
+    while (left > 0) {
+      if (await run()) return true;
+      left -= 1;
+    };
+    false;
   };
 };

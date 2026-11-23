@@ -28,7 +28,7 @@ module {
         source;
         errorMessage;
         timestamp = Time.now();
-        replayCount = 0;
+        var replayCount = 0;
       };
       Queue.pushBack(queue, letter);
       id;

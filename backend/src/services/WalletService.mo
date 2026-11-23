@@ -1,5 +1,4 @@
 import Array "mo:core/Array";
-import Blob "mo:core/Blob";
 import Caller "mo:pkg/principal/caller";
 import Icrc1 "mo:pkg/icrc1/icrc1";
 import Ledger "mo:pkg/ledger/ledger";

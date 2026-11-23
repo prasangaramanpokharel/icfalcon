@@ -1,4 +1,5 @@
 import Array "mo:core/Array";
+import VarArray "mo:core/VarArray";
 import Types "./types";
 
 module {
@@ -83,6 +84,6 @@ module {
       mut[j] := key;
       i += 1;
     };
-    Array.fromVarArray<T>(mut);
+    VarArray.toArray<T>(mut);
   };
 };

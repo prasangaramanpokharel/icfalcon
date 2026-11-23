@@ -1,26 +1,27 @@
 import Text "mo:core/Text";
 import Queue "mo:core/Queue";
 import Result "mo:core/Result";
-import Array "mo:core/Array";
 import Nat "mo:core/Nat";
 
 module {
-  public type Step<Ctx> = {
+  public type Context = Text;
+
+  public type Step = {
     name : Text;
-    execute : Ctx -> async Result.Result<Ctx, Text>;
-    compensate : Ctx -> async ();
+    execute : Context -> async Result.Result<Context, Text>;
+    compensate : Context -> async ();
   };
 
-  public class SagaOrchestrator<Ctx>() {
-    private let steps = Queue.empty<Step<Ctx>>();
+  public class SagaOrchestrator() {
+    private let steps = Queue.empty<Step>();
 
-    public func addStep(step : Step<Ctx>) : () {
+    public func addStep(step : Step) : () {
       Queue.pushBack(steps, step);
     };
 
-    public func run(initialContext : Ctx) : async Result.Result<Ctx, Text> {
+    public func run(initialContext : Context) : async Result.Result<Context, Text> {
       let allSteps = Queue.toArray(steps);
-      let executedSteps = Queue.empty<Step<Ctx>>();
+      let executedSteps = Queue.empty<Step>();
       var currentCtx = initialContext;
 
       for (step in allSteps.values()) {
@@ -32,12 +33,11 @@ module {
               Queue.pushBack(executedSteps, step);
             };
             case (#err(reason)) {
-              // Rollback in reverse order
               await rollback(executedSteps, currentCtx);
               return #err("Saga failed at step [" # step.name # "]: " # reason);
             };
           };
-        } catch (e) {
+        } catch (_e) {
           await rollback(executedSteps, currentCtx);
           return #err("Saga trapped at step [" # step.name # "]");
         };
@@ -46,19 +46,23 @@ module {
       #ok(currentCtx);
     };
 
-    private func rollback(executed : Queue.Queue<Step<Ctx>>, ctx : Ctx) : async () {
+    private func rollback(executed : Queue.Queue<Step>, ctx : Context) : async () {
       let arr = Queue.toArray(executed);
       var i = arr.size();
       while (i > 0) {
         i -= 1;
-        let step = arr[i];
         try {
-          await step.compensate(ctx);
-        } catch (_e) {
-          // Compensations should not trap
-          ();
-        };
+          await arr[i].compensate(ctx);
+        } catch (_) {};
       };
+    };
+
+    public func size() : Nat {
+      Queue.size(steps);
+    };
+
+    public func clear() : () {
+      Queue.clear(steps);
     };
   };
 };

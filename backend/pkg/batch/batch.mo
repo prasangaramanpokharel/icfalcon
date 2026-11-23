@@ -9,7 +9,7 @@ module {
     if (size == 0 or chunkSize == 0) {
       [];
     } else {
-      let numChunks = (size + chunkSize - 1) / chunkSize;
+      let numChunks = if (size % chunkSize == 0) (size / chunkSize) else (size / chunkSize + 1);
       Array.tabulate<[T]>(numChunks, func(chunkIdx : Nat) : [T] {
         let start = chunkIdx * chunkSize;
         let remaining = if (size > start) { size - start } else { 0 };
@@ -37,12 +37,12 @@ module {
   public func processBatched<In, Out>(
     items : [In],
     batchSize : Nat,
-    handler : [In] -> async* [Out]
-  ) : async* [Out] {
+    handler : [In] -> [Out]
+  ) : [Out] {
     let chunks = chunk<In>(items, batchSize);
     let results = Queue.empty<Out>();
     for (c in chunks.values()) {
-      let chunkOut = await* handler(c);
+      let chunkOut = handler(c);
       for (outItem in chunkOut.values()) {
         Queue.pushBack(results, outItem);
       };

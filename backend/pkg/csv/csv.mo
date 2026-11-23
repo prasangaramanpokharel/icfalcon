@@ -1,11 +1,11 @@
 import Text "mo:core/Text";
-import Array "mo:core/Array";
+import Iter "mo:core/Iter";
 
 module {
   public func joinRow(fields : [Text]) : Text {
-    Text.join(",", fields.vals());
+    Text.join(fields.vals(), ",");
   };
   public func splitRow(row : Text) : [Text] {
-    Array.map<Text, Text>([row], func(r) { r });
+    Iter.toArray<Text>(Text.split(row, #char ','));
   };
 };
