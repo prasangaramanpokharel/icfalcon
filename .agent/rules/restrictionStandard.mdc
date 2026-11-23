@@ -1,0 +1,22 @@
+---
+description: Strict safety guardrails prohibiting AI agents from executing destructive canister, wasm reset, or state-wiping commands without explicit human confirmation.
+globs: **/*
+alwaysApply: true
+---
+
+# Restriction Standard: AI Safety Guardrails
+
+Autonomous AI agents operating in this workspace must adhere to the following safety constraints:
+
+1. **PROHIBITED COMMANDS WITHOUT EXPLICIT CONFIRMATION:**
+   - Canister deletion: `falcon c:delete`, `icp canister delete`, `dfx canister delete`
+   - Code uninstallation: `canister:uninstall`, `icp canister uninstall-code`, `dfx canister uninstall-code`
+   - Wasm resets / state wipes: `falcon b:deploy --clean`, `--mode=reinstall`
+   - Identity deletion: `dfx identity delete`, `icp identity delete`, `rm -rf .dfx`, `rm -rf .icp`
+   - Dropping persistent database tables or truncating stable memory partitions
+
+2. **MANDATORY CONFIRMATION PROTOCOL:**
+   - When any destructive command is required, the AI MUST HALT.
+   - Display a bold caution notice detailing the exact command and data loss risks.
+   - Require the user to explicitly confirm by replying `CONFIRM EXECUTE`.
+   - Always recommend safe alternatives (`--mode=upgrade`, `falcon c:stop`, snapshots) first.

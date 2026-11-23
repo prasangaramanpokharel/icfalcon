@@ -1,21 +1,21 @@
 ---
 name: walletStandard
 description: >-
-  Custodial wallet — derive accounts, deposit addresses, balance reads. Use when
-  scaffolding wallet features, deposit UI, or registering users for on-chain funds.
+  Custodial wallet — derive accounts, deposit addresses, balance reads, and ICRC-2 allowances.
+  Use when scaffolding wallet features, deposit UI, or registering users for on-chain funds.
 ---
 
 # Wallet Standard
 
 ## Purpose
 
-Teach agents how to compose IcFalcon hub packages for custodial wallets.
+Teach agents how to compose IcFalcon hub packages for custodial wallets and multi-token asset management.
 
 ## When to use
 
 - New wallet / deposit feature
-- Deriving per-user ICRC accounts
-- Multi-token support (ICP, ckBTC, custom ICRC)
+- Deriving per-user ICRC accounts across tokens (ICP, ckBTC, ckETH, ckUSDC)
+- Checking ledger balances and ICRC-2 delegation allowances for swaps
 
 ## Packages
 
@@ -39,7 +39,7 @@ falcon add pkg wallet
 api/v1/Wallet.mo → WalletService → mo:pkg/wallet
 ```
 
-Hub pkgs are pure logic. Only `WalletService` awaits `icrc1_balance_of`.
+Hub pkgs are pure logic. Only `WalletService` awaits ledger async calls.
 
 ```motoko
 import Ledger "mo:pkg/ledger/ledger";
@@ -54,11 +54,24 @@ let deposit = Wallet.depositInfo(account);
 let balance = await ledger.icrc1_balance_of(Wallet.toIcrcAccount(account));
 ```
 
-Multi-token: swap `token` only — same `deriveAccount` for ICP and ckBTC.
+### Multi-Token Support
+
+Swap the `token` definition — same `deriveAccount` applies to ICP, ckBTC, ckETH, and ckUSDC:
 
 ```motoko
 import CkBtc "mo:pkg/ckbtc/ckbtc";
 let ckToken = CkBtc.tokenRef(ckbtcLedgerId);
+```
+
+### ICRC-2 Allowance Delegation
+
+When integrating DEX routers or automated swaps, check existing allowance before requesting new approvals:
+
+```motoko
+let allowance = await ledger.icrc2_allowance({
+  account = Wallet.toIcrcAccount(account);
+  spender = dexRouterPrincipal;
+});
 ```
 
 ## Rules
@@ -77,5 +90,6 @@ Ledger hazards (double-credit, address formats, fees): read
 | Task | Skill |
 |---|---|
 | Send tokens | [`../transferStandard/SKILL.md`](../transferStandard/SKILL.md) |
+| Token swaps & AMM | [`../swapStandard/SKILL.md`](../swapStandard/SKILL.md) |
 | Tx history | [`../transactionStandard/SKILL.md`](../transactionStandard/SKILL.md) |
 | Layering | [`../../layeringStandard/SKILL.md`](../../layeringStandard/SKILL.md) |

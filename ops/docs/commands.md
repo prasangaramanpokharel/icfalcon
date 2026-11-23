@@ -53,6 +53,7 @@ Everything runs via the global CLI: `falcon <command> [--local] [args]`
 | | `falcon cycles:mint <amount>` | `falcon y:mint` | Convert ICP tokens to cycles |
 | | `falcon cycles:transfer <dest>` | `falcon y:send` / `y:transfer` | Transfer cycles to canister or principal |
 | | `falcon cycles:topup [amount]` | `falcon y:topup` / `c:topup` | Top up canister with cycles |
+| | `falcon cycles:fund [icp]` | `falcon y:fund` / `deploy:fund` | Display friendly funding banner with terminal QR code |
 | | `falcon cycles:address` | `falcon y:addr` | Display cycles ledger account ID |
 | **Canister** | `falcon canister:status` | `falcon c:status` | Query canister operational status and memory |
 | | `falcon canister:ping` | `falcon c:ping` | Run health ping query |

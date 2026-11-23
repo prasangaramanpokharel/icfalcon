@@ -74,6 +74,8 @@ falcon p:check --local      # skills + code audit + backend + frontend build
 | Project setup | `.agent/skills/guideStandard/projectSetupStandard/SKILL.md` |
 | Local deploy | `.agent/skills/guideStandard/localDeployStandard/SKILL.md` |
 | Production deploy | `.agent/skills/guideStandard/productionDeployStandard/SKILL.md` |
+| Canister deploy & cycles triage | `.agent/skills/guideStandard/deployStandard/SKILL.md` |
+| Safety guardrails & restrictions | `.agent/skills/restrictionStandard/SKILL.md` |
 | ICPay controllers | `.agent/skills/icpayControllerStandard/SKILL.md` |
 | Custom domains / SSL | `.agent/skills/domainStandard/SKILL.md` |
 | Cycle costs & pricing | `.agent/skills/cycleCostStandard/SKILL.md` |
@@ -104,6 +106,7 @@ Hub money layer for Phase 1. **Hazards only** (fees, double-credit, address form
 | **Wallet** — derive accounts, deposit addresses, balance reads | New wallet feature, deposit UI, multi-token (ICP / ckBTC) | [`walletStandard`](.agent/skills/financeStandard/walletStandard/SKILL.md) | `subaccount`, `ledger`, `icrc1`, `wallet` |
 | **Transfer** — send ICRC, fee reserve, idempotency | `TransferService.send`, user-to-user sends | [`transferStandard`](.agent/skills/financeStandard/transferStandard/SKILL.md) | `transfer`, `transaction`, `icrc1` |
 | **Transaction** — history index, deposit sync | `TxStore`, history API, reconciliation | [`transactionStandard`](.agent/skills/financeStandard/transactionStandard/SKILL.md) | `transaction` |
+| **Swap** — AMM liquidity, slippage, ICRC-2 trade | `SwapService.swap`, multi-token swaps, KongSwap/ICPSwap | [`swapStandard`](.agent/skills/financeStandard/swapStandard/SKILL.md) | `icrc1`, `icrc2`, `swap`, `transaction` |
 
 **Architecture rules (all finance skills):**
 
@@ -142,6 +145,7 @@ Reference implementation (Phase 3): [docs/phase/3/PLAN.md](docs/phase/3/PLAN.md)
 ├── ormStandard/
 ├── cycleCostStandard/
 ├── versionStandard/
+├── restrictionStandard/
 ├── extensionsStandard/
 │   ├── openAiStandard/
 │   ├── objectStorageStandard/
@@ -155,11 +159,13 @@ Reference implementation (Phase 3): [docs/phase/3/PLAN.md](docs/phase/3/PLAN.md)
 ├── financeStandard/
 │   ├── walletStandard/
 │   ├── transferStandard/
-│   └── transactionStandard/
+│   ├── transactionStandard/
+│   └── swapStandard/
 ├── guideStandard/
 │   ├── projectSetupStandard/
 │   ├── localDeployStandard/
 │   ├── productionDeployStandard/
+│   ├── deployStandard/
 │   └── releaseStandard/
 └── motokoStandard/
     ├── writingMotokoStandard/

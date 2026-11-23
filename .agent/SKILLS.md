@@ -61,6 +61,7 @@ Also runs as the first step of `falcon p:check`.
 | ORM & 3NF database models | [`ormStandard/SKILL.md`](skills/ormStandard/SKILL.md) |
 | Cycle costs & pricing | [`cycleCostStandard/SKILL.md`](skills/cycleCostStandard/SKILL.md) |
 | Version & dependency standard | [`versionStandard/SKILL.md`](skills/versionStandard/SKILL.md) |
+| Safety guardrails & restrictions | [`restrictionStandard/SKILL.md`](skills/restrictionStandard/SKILL.md) |
 
 ---
 
@@ -71,6 +72,7 @@ Also runs as the first step of `falcon p:check`.
 | Wallet, deposit, balance | [`financeStandard/walletStandard/SKILL.md`](skills/financeStandard/walletStandard/SKILL.md) |
 | Send ICP / ICRC | [`financeStandard/transferStandard/SKILL.md`](skills/financeStandard/transferStandard/SKILL.md) |
 | Tx history, deposit sync | [`financeStandard/transactionStandard/SKILL.md`](skills/financeStandard/transactionStandard/SKILL.md) |
+| Token swaps & AMM liquidity | [`financeStandard/swapStandard/SKILL.md`](skills/financeStandard/swapStandard/SKILL.md) |
 | AI-safe transfers (propose/execute) | [`extensionsStandard/aiActionsStandard/SKILL.md`](skills/extensionsStandard/aiActionsStandard/SKILL.md) |
 | Ledger hazards (fees, double-credit) | [`motokoStandard/ledgerIntegrationStandard/SKILL.md`](skills/motokoStandard/ledgerIntegrationStandard/SKILL.md) |
 
@@ -151,6 +153,7 @@ Backend detail skills: [`backend/.agent/SKILLS.md`](../backend/.agent/SKILLS.md)
 | Project setup | [`guideStandard/projectSetupStandard/SKILL.md`](skills/guideStandard/projectSetupStandard/SKILL.md) |
 | Local deploy | [`guideStandard/localDeployStandard/SKILL.md`](skills/guideStandard/localDeployStandard/SKILL.md) |
 | Production deploy | [`guideStandard/productionDeployStandard/SKILL.md`](skills/guideStandard/productionDeployStandard/SKILL.md) |
+| Canister deploy & cycles triage | [`guideStandard/deployStandard/SKILL.md`](skills/guideStandard/deployStandard/SKILL.md) |
 | ICPay canister controllers | [`icpayControllerStandard/SKILL.md`](skills/icpayControllerStandard/SKILL.md) |
 | Custom domains & SSL | [`domainStandard/SKILL.md`](skills/domainStandard/SKILL.md) |
 | Release | [`guideStandard/releaseStandard/SKILL.md`](skills/guideStandard/releaseStandard/SKILL.md) |
@@ -179,11 +182,11 @@ Backend detail skills: [`backend/.agent/SKILLS.md`](../backend/.agent/SKILLS.md)
 ├── migrationStandard/       testingStandard/         integrationStandard/
 ├── endpointsStandard/     frontendStandard/        logoStandard/            ormStandard/
 ├── icpayControllerStandard/ domainStandard/          icpsdkStandard/          falconUniverseStandard/  cycleCostStandard/
-├── versionStandard/
+├── versionStandard/         restrictionStandard/
 ├── financeStandard/
-│   ├── walletStandard/      transferStandard/        transactionStandard/
+│   ├── walletStandard/      transferStandard/        transactionStandard/     swapStandard/
 ├── guideStandard/
-│   ├── projectSetupStandard/   localDeployStandard/
+│   ├── projectSetupStandard/   localDeployStandard/  deployStandard/
 │   ├── productionDeployStandard/   releaseStandard/
 ├── extensionsStandard/      (15 *Standard skills — see table above)
 ├── connectorsStandard/      (3 *ConnectorStandard skills)

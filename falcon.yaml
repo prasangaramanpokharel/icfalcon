@@ -233,6 +233,10 @@ commands:
     confirm: false
     script: ops/scripts/identity-op.sh address
 
+  cycles:fund:
+    confirm: false
+    script: ops/scripts/cycles-fund.sh
+
   # ── network ──────────────────────────────────────────
   network:list:
     confirm: false
@@ -374,6 +378,8 @@ aliases:
   y:transfer: cycles:transfer
   y:send: cycles:transfer
   y:topup: cycles:topup
+  y:fund: cycles:fund
+  deploy:fund: cycles:fund
   # network
   net:list: network:list
   net:ls: network:list

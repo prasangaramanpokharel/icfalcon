@@ -121,6 +121,7 @@ ${GREEN}Cycles${NC}
   y:bal           Cycles balance
   y:mint <amount> Convert ICP to cycles
   y:topup [amt]   Top up canister with cycles (c:topup)
+  y:fund [icp]    Fund identity with ICP for cycles (shows QR code)
   y:send <dest>   Transfer cycles
   y:addr          Cycles ledger address
 
