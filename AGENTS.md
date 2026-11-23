@@ -74,7 +74,7 @@ falcon p:check --local      # skills + code audit + backend + frontend build
 | Project setup | `.agent/skills/guideStandard/projectSetupStandard/SKILL.md` |
 | Local deploy | `.agent/skills/guideStandard/localDeployStandard/SKILL.md` |
 | Production deploy | `.agent/skills/guideStandard/productionDeployStandard/SKILL.md` |
-| Canister deploy & cycles triage | `.agent/skills/guideStandard/deployStandard/SKILL.md` |
+| Canister deploy & cycles triage | `.agent/skills/deployStandard/SKILL.md` |
 | Safety guardrails & restrictions | `.agent/skills/restrictionStandard/SKILL.md` |
 | ICPay controllers | `.agent/skills/icpayControllerStandard/SKILL.md` |
 | Custom domains / SSL | `.agent/skills/domainStandard/SKILL.md` |
@@ -146,6 +146,7 @@ Reference implementation (Phase 3): [docs/phase/3/PLAN.md](docs/phase/3/PLAN.md)
 ├── cycleCostStandard/
 ├── versionStandard/
 ├── restrictionStandard/
+├── deployStandard/
 ├── extensionsStandard/
 │   ├── openAiStandard/
 │   ├── objectStorageStandard/
@@ -165,7 +166,6 @@ Reference implementation (Phase 3): [docs/phase/3/PLAN.md](docs/phase/3/PLAN.md)
 │   ├── projectSetupStandard/
 │   ├── localDeployStandard/
 │   ├── productionDeployStandard/
-│   ├── deployStandard/
 │   └── releaseStandard/
 └── motokoStandard/
     ├── writingMotokoStandard/
