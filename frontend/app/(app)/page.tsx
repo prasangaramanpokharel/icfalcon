@@ -29,14 +29,22 @@ export default function HomePage() {
           />
           <span className="font-semibold tracking-tight">IcFalcon</span>
           <Badge variant="outline" className="text-[11px] font-mono">
-            v0.3.0
+            v0.3.1
           </Badge>
         </div>
 
         <nav className="flex items-center gap-2">
           <ThemeToggle />
           <a
-            href="https://raw.githubusercontent.com/prasangapokharel/IcFalcon/refs/heads/main/docs/README.md"
+            href="https://icpay.cloud/icfalcon"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+          >
+            Website
+          </a>
+          <a
+            href="https://github.com/prasangaramanpokharel/icfalcon#readme"
             target="_blank"
             rel="noopener noreferrer"
             className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
@@ -72,20 +80,20 @@ export default function HomePage() {
 
         <div className="mt-5 flex items-center justify-center gap-2.5">
           <a
-            href="https://raw.githubusercontent.com/prasangapokharel/IcFalcon/refs/heads/main/docs/README.md"
+            href="https://icpay.cloud/icfalcon"
             target="_blank"
             rel="noopener noreferrer"
             className={cn(buttonVariants({ variant: "default", size: "sm" }))}
           >
-            Documentation
+            Website
           </a>
           <a
-            href="https://icpay.app/products/icFalcon/commands"
+            href="https://github.com/prasangaramanpokharel/icfalcon#readme"
             target="_blank"
             rel="noopener noreferrer"
             className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
           >
-            Commands
+            Documentation
           </a>
         </div>
       </div>
@@ -95,7 +103,7 @@ export default function HomePage() {
         <span>© {new Date().getFullYear()} IcFalcon</span>
 
         <a
-          href="https://icpay.app"
+          href="https://icpay.cloud"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 rounded-full border bg-card/60 px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"

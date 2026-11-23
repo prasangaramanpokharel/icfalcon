@@ -2,6 +2,13 @@
 
 All notable changes to IcFalcon are documented here.
 
+## [0.3.1] - 2026-11-23
+
+### Changed
+- **Official Website & Homepage**: Set official homepage to `https://icpay.cloud/icfalcon` across GitHub repository metadata, npm packages (`icfalcon`, `create-icfalcon`), and Next.js frontend navigation.
+- **GitHub Repository Topics**: Configured official topics and tags (`canister`, `cli`, `framework`, `icfalcon`, `icp`, `icpay`, `internet-computer`, `motoko`, `nextjs`, `typescript`, `web3`) on `prasangaramanpokharel/icfalcon`.
+- **Frontend Navigation & Links**: Updated top navigation and hero action buttons to direct to `https://icpay.cloud/icfalcon` and official documentation.
+
 ## [0.3.0] - 2026-11-23
 
 ### Added

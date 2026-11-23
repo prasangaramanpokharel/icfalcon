@@ -1,6 +1,6 @@
 {
   "name": "icfalcon",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Internet Computer app framework: Motoko backend, Next.js frontend, falcon ops CLI.",
   "license": "MIT",
   "author": "prasangapokharel",
@@ -8,7 +8,7 @@
     "type": "git",
     "url": "git+https://github.com/prasangaramanpokharel/icfalcon.git"
   },
-  "homepage": "https://github.com/prasangaramanpokharel/icfalcon",
+  "homepage": "https://icpay.cloud/icfalcon",
   "bugs": {
     "url": "https://github.com/prasangaramanpokharel/icfalcon/issues"
   },
@@ -21,7 +21,9 @@
     "framework",
     "canister",
     "falcon",
-    "cli"
+    "cli",
+    "icpay",
+    "web3"
   ],
   "bin": {
     "falcon": "bin/falcon.js",

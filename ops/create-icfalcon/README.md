@@ -35,5 +35,6 @@ Install these **before** running `npm create`:
 
 ## Links
 
+- Website: https://icpay.cloud/icfalcon
 - GitHub: https://github.com/prasangaramanpokharel/icfalcon
 - Docs: https://github.com/prasangaramanpokharel/icfalcon/tree/main/docs

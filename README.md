@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <a href="https://icpay.cloud/icfalcon">Website</a> ·
   <a href="docs/gettingStarted/README.md">Getting started</a> ·
   <a href="docs/README.md">Documentation</a> ·
   <a href="ops/docs/commands.md">CLI reference</a> ·
