@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { BackendStatus } from "@/components/home/BackendStatus"
 import { Meteors } from "@/components/ui/meteors"
 import { Badge } from "@/components/ui/badge"
@@ -35,6 +36,12 @@ export default function HomePage() {
 
         <nav className="flex items-center gap-2">
           <ThemeToggle />
+          <Link
+            href="/login"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            Sign In
+          </Link>
           <a
             href="https://icpay.cloud/icfalcon"
             target="_blank"
